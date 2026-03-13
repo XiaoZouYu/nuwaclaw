@@ -3,7 +3,7 @@
 [English](README_EN.md) | 简体中文
 
 [![CI](https://img.shields.io/github/actions/workflow/status/soddygo/nuwax-agent/ci.yml?branch=main)](https://github.com/soddygo/nuwax-agent/actions)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 多引擎 AI 助手桌面客户端，基于 ACP (Agent Client Protocol) 协议，支持任何兼容 ACP 的 Agent 引擎，提供跨平台的本地 AI Agent 执行能力。
 
@@ -300,7 +300,7 @@ git push origin v0.1.0
 
 ## 许可证
 
-[MIT License](LICENSE)
+[Apache License 2.0](LICENSE)
 
 ## 贡献指南
 

@@ -3,7 +3,7 @@
 English | [简体中文](README.md)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/soddygo/nuwax-agent/ci.yml?branch=main)](https://github.com/soddygo/nuwax-agent/actions)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 Multi-engine AI assistant desktop client based on ACP (Agent Client Protocol), supporting any ACP-compatible Agent engine with cross-platform local AI Agent execution capabilities.
 
@@ -300,7 +300,7 @@ git push origin v0.1.0
 
 ## License
 
-[MIT License](LICENSE)
+[Apache License 2.0](LICENSE)
 
 ## Contributing
 
