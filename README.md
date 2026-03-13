@@ -36,7 +36,6 @@ NuwaClaw 采用 [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) 
 
 ### 跨平台客户端
 - **Electron 客户端** - 基于 Electron + React 的桌面客户端
-- **Tauri 客户端** - 基于 Tauri + React 的轻量客户端
 
 ### MCP 协议支持
 - 动态 MCP 服务器管理
@@ -53,7 +52,6 @@ NuwaClaw 采用 [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) 
 nuwax-agent-client/
 ├── crates/
 │   ├── agent-electron-client/   # Electron 客户端 (主要开发)
-│   ├── agent-tauri-client/      # Tauri 客户端
 │   ├── nuwax-mcp-stdio-proxy/   # MCP 协议聚合代理
 │   ├── agent-gpui-client/       # GPUI 客户端 (实验性)
 │   ├── agent-server-admin/      # 管理端 API 服务
@@ -91,21 +89,6 @@ npm run dist:win      # Windows
 npm run dist:linux    # Linux
 ```
 
-### Tauri 客户端
-
-```bash
-cd crates/agent-tauri-client
-
-# 安装依赖
-pnpm install
-
-# 开发模式
-pnpm tauri dev
-
-# 构建
-pnpm tauri build
-```
-
 ### MCP 代理服务
 
 ```bash
@@ -129,11 +112,11 @@ nuwax-mcp-stdio-proxy proxy --port 18099 --config '{"mcpServers":{...}}'
 
 ## 平台支持
 
-| 平台 | 架构 | Electron | Tauri |
-|------|------|:--------:|:-----:|
-| macOS | arm64, x86_64 | ✅ | ✅ |
-| Windows | x86_64, arm64 | ✅ | ✅ |
-| Linux | x86_64, arm64 | ✅ | ✅ |
+| 平台 | 架构 | 状态 |
+|------|------|:----:|
+| macOS | arm64, x86_64 | ✅ |
+| Windows | x86_64, arm64 | ✅ |
+| Linux | x86_64, arm64 | ✅ |
 
 ## Electron 客户端详解
 
@@ -283,8 +266,6 @@ RUST_LOG=debug npm run dev
 |--------|----------|------|
 | `ci-electron.yml` | `crates/agent-electron-client/**` 变更 | Electron 测试构建 |
 | `release-electron.yml` | 推送 `electron-v*` tag | Electron 发布构建 |
-| `ci-tauri.yml` | `crates/agent-tauri-client/**` 变更 | Tauri 测试构建 |
-| `release-tauri.yml` | 推送 `v*` tag | Tauri 发布构建 |
 
 ### 发布流程
 
@@ -292,10 +273,6 @@ RUST_LOG=debug npm run dev
 # Electron 发布
 git tag electron-v0.9.0
 git push origin electron-v0.9.0
-
-# Tauri 发布
-git tag v0.1.0
-git push origin v0.1.0
 ```
 
 ## 许可证
@@ -317,6 +294,5 @@ git push origin v0.1.0
 ## 相关项目
 
 - [Electron](https://www.electronjs.org/) - 跨平台桌面应用框架
-- [Tauri](https://tauri.app/) - 轻量级桌面应用框架
 - [MCP](https://modelcontextprotocol.io/) - Model Context Protocol
 - [Ant Design](https://ant.design/) - React UI 组件库

@@ -36,7 +36,6 @@ NuwaClaw uses [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) to
 
 ### Cross-Platform Clients
 - **Electron Client** - Desktop client based on Electron + React
-- **Tauri Client** - Lightweight client based on Tauri + React
 
 ### MCP Protocol Support
 - Dynamic MCP server management
@@ -53,7 +52,6 @@ NuwaClaw uses [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) to
 nuwax-agent-client/
 ├── crates/
 │   ├── agent-electron-client/   # Electron client (primary development)
-│   ├── agent-tauri-client/      # Tauri client
 │   ├── nuwax-mcp-stdio-proxy/   # MCP protocol aggregation proxy
 │   ├── agent-gpui-client/       # GPUI client (experimental)
 │   ├── agent-server-admin/      # Admin API service
@@ -91,21 +89,6 @@ npm run dist:win      # Windows
 npm run dist:linux    # Linux
 ```
 
-### Tauri Client
-
-```bash
-cd crates/agent-tauri-client
-
-# Install dependencies
-pnpm install
-
-# Development mode
-pnpm tauri dev
-
-# Build
-pnpm tauri build
-```
-
 ### MCP Proxy Service
 
 ```bash
@@ -129,11 +112,11 @@ nuwax-mcp-stdio-proxy proxy --port 18099 --config '{"mcpServers":{...}}'
 
 ## Platform Support
 
-| Platform | Architecture | Electron | Tauri |
-|----------|--------------|:--------:|:-----:|
-| macOS | arm64, x86_64 | ✅ | ✅ |
-| Windows | x86_64, arm64 | ✅ | ✅ |
-| Linux | x86_64, arm64 | ✅ | ✅ |
+| Platform | Architecture | Status |
+|----------|--------------|:------:|
+| macOS | arm64, x86_64 | ✅ |
+| Windows | x86_64, arm64 | ✅ |
+| Linux | x86_64, arm64 | ✅ |
 
 ## Electron Client Details
 
@@ -283,8 +266,6 @@ RUST_LOG=debug npm run dev
 |----------|---------|-------------|
 | `ci-electron.yml` | `crates/agent-electron-client/**` changes | Electron test build |
 | `release-electron.yml` | Push `electron-v*` tag | Electron release build |
-| `ci-tauri.yml` | `crates/agent-tauri-client/**` changes | Tauri test build |
-| `release-tauri.yml` | Push `v*` tag | Tauri release build |
 
 ### Release Process
 
@@ -292,10 +273,6 @@ RUST_LOG=debug npm run dev
 # Electron release
 git tag electron-v0.9.0
 git push origin electron-v0.9.0
-
-# Tauri release
-git tag v0.1.0
-git push origin v0.1.0
 ```
 
 ## License
@@ -317,6 +294,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 ## Related Projects
 
 - [Electron](https://www.electronjs.org/) - Cross-platform desktop app framework
-- [Tauri](https://tauri.app/) - Lightweight desktop app framework
 - [MCP](https://modelcontextprotocol.io/) - Model Context Protocol
 - [Ant Design](https://ant.design/) - React UI component library
