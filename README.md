@@ -44,8 +44,6 @@ NuwaClaw 采用 [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) 
 - 弹性连接与自动重连
 
 ### 其他特性
-- **沙箱执行** - 支持 Docker/WSL/Firejail 隔离
-- **IM 集成** - Telegram、Discord、钉钉、飞书
 - **持久化存储** - SQLite 本地存储
 - **系统托盘** - 后台运行，快速操作
 

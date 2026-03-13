@@ -44,8 +44,6 @@ NuwaClaw uses [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) to
 - Resilient connection with automatic reconnection
 
 ### Other Features
-- **Sandbox Execution** - Docker/WSL/Firejail isolation support
-- **IM Integration** - Telegram, Discord, DingTalk, Feishu
 - **Persistent Storage** - SQLite local storage
 - **System Tray** - Background operation with quick actions
 
