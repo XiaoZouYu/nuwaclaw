@@ -1,152 +1,238 @@
-# nuwax-agent
+# NuwaClaw
 
 [English](README_EN.md) | 简体中文
 
 [![CI](https://img.shields.io/github/actions/workflow/status/soddygo/nuwax-agent/ci.yml?branch=main)](https://github.com/soddygo/nuwax-agent/actions)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-跨平台 Agent 客户端，支持远程桌面控制和 AI Agent 任务执行。基于 [gpui](https://github.com/zed-industries/zed) 构建原生 UI，通过 [nuwax-rustdesk](https://github.com/rustdesk/rustdesk) 实现安全的 P2P/Relay 通信。
+多引擎 AI 助手桌面客户端，基于 ACP (Agent Client Protocol) 协议，支持任何兼容 ACP 的 Agent 引擎，提供跨平台的本地 AI Agent 执行能力。
 
-## 功能特性
+## 核心特性
 
-### 核心功能
+### 多引擎支持
 
-- **远程连接管理** - 通过 P2P 或中继服务器与管理端建立安全连接
-- **AI Agent 任务执行** - 接收并执行来自管理端的 AI Agent 任务
-- **依赖管理** - 自动检测和安装 Node.js、npm 等运行时依赖
-- **安全通信** - 基于 RustDesk 协议的端到端加密通信
+NuwaClaw 采用 [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) 协议与 Agent 引擎通信，支持任何实现了 ACP 协议的 Agent：
 
-### UI 功能
+| 引擎 | 说明 |
+|------|------|
+| **Claude Code** | Anthropic 官方 CLI Agent，推荐使用 ⭐ |
+| **Codex CLI** | OpenAI 的代码 Agent |
+| **Gemini CLI** | Google 的 AI Agent |
+| **GitHub Copilot** | GitHub 的 AI 编程助手 |
+| **Cline** | 开源自主编程 Agent |
+| **Cursor** | Cursor IDE 的 Agent 能力 |
+| **Goose** | Block 开源的 AI Agent |
+| **Qwen Code** | 阿里通义千问代码 Agent |
+| **Junie** | JetBrains 的 AI Agent |
+| **OpenCode** | 开源代码 Agent |
+| **Nuwaxcode** | Nuwax 自研 Agent 引擎 |
+| **更多...** | [查看完整列表](https://agentclientprotocol.com/get-started/agents) |
 
-- **系统托盘** - 后台运行，托盘图标快速操作
-- **客户端信息** - 显示客户端 ID 和连接密码
-- **设置管理** - 服务器配置、安全设置、外观设置
-- **依赖状态** - 可视化依赖检测和安装进度
-- **远程桌面** - 远程桌面查看和控制（开发中）
-- **聊天通信** - 与管理端的即时消息（开发中）
+> **ACP 协议**: Agent Client Protocol，标准化编辑器/IDE 与 AI Agent 之间的通信协议，基于 NDJSON 格式。类似 LSP 之于语言服务，ACP 让你可以将任何 ACP 兼容的 Agent 接入到任何支持的客户端。
 
-### 平台支持
+- 引擎隔离运行，独立环境配置
+- 动态切换引擎，无需重启应用
+- 避免厂商锁定，自由选择 Agent
 
-| 平台 | 架构 | 状态 |
-|------|------|------|
-| macOS | arm64, x86_64 | ✅ 支持 |
-| Windows | x86_64 | ✅ 支持 |
-| Linux | x86_64, arm64 | ✅ 支持 |
+### 跨平台客户端
+- **Electron 客户端** - 基于 Electron + React 的桌面客户端
+- **Tauri 客户端** - 基于 Tauri + React 的轻量客户端
+
+### MCP 协议支持
+- 动态 MCP 服务器管理
+- 多协议支持 (stdio, SSE, Streamable HTTP)
+- 弹性连接与自动重连
+
+### 其他特性
+- **沙箱执行** - 支持 Docker/WSL/Firejail 隔离
+- **IM 集成** - Telegram、Discord、钉钉、飞书
+- **持久化存储** - SQLite 本地存储
+- **系统托盘** - 后台运行，快速操作
 
 ## 项目架构
 
 ```
-nuwax-agent/
+nuwax-agent-client/
 ├── crates/
-│   ├── agent-client/       # 客户端主程序
-│   ├── agent-protocol/     # 通信协议定义
-│   ├── agent-server-admin/ # 管理端 API 服务
-│   └── data-server/        # 信令/中继服务器封装
-├── vendors/
-│   ├── nuwax-rustdesk/     # RustDesk 通信库
-│   ├── gpui-component/     # UI 组件库
-│   └── ...
-└── tests/
-    ├── e2e/                # 端到端测试
-    └── integration/        # 集成测试
+│   ├── agent-electron-client/   # Electron 客户端 (主要开发)
+│   ├── agent-tauri-client/      # Tauri 客户端
+│   ├── nuwax-mcp-stdio-proxy/   # MCP 协议聚合代理
+│   ├── agent-gpui-client/       # GPUI 客户端 (实验性)
+│   ├── agent-server-admin/      # 管理端 API 服务
+│   ├── agent-protocol/          # 通信协议定义
+│   ├── system-permissions/      # 系统权限管理
+│   └── nuwax-agent-core/        # 核心逻辑 (Rust)
+└── vendors/                     # 第三方依赖
 ```
 
 ## 快速开始
 
-### 环境要求
-
-- Rust 1.75+
-- Node.js 18+ (可选，客户端会自动安装)
-- vcpkg (用于 nuwax-rustdesk 依赖)
-
-### 安装 vcpkg 依赖
-
-推荐使用 Makefile 安装（默认安装到 `$HOME/vcpkg`）。安装完成后会自动在项目根创建软链接 `vcpkg`，之后 `make build` 与 `cargo build` 均可直接使用：
+### Electron 客户端
 
 ```bash
-make setup-vcpkg
+# 方式一：使用 Makefile（推荐，项目根目录执行）
+make electron-dev     # 开发模式
+make electron-build   # 构建
+make electron-dist    # 打包
+
+# 方式二：进入目录执行 npm 命令
+cd crates/agent-electron-client
+
+# 安装依赖
+npm install
+
+# 开发模式
+npm run dev
+
+# 构建
+npm run build
+
+# 打包
+npm run dist:mac      # macOS
+npm run dist:win      # Windows
+npm run dist:linux    # Linux
 ```
 
-本仓库通过 `.cargo/config.toml` 将构建时的 VCPKG_ROOT 设为项目根下的 `vcpkg`；若你已自行设置环境变量 VCPKG_ROOT，则不会被覆盖。
-
-也可手动克隆并安装依赖（将路径替换为你的 vcpkg 目录，并在项目根创建软链接 `vcpkg` 指向该目录）：
+### Tauri 客户端
 
 ```bash
-git clone https://github.com/microsoft/vcpkg /path/to/vcpkg
-cd /path/to/vcpkg && ./bootstrap-vcpkg.sh
-# macOS: ./vcpkg install libvpx libyuv opus aom --triplet arm64-osx 或 x64-osx
+cd crates/agent-tauri-client
+
+# 安装依赖
+pnpm install
+
+# 开发模式
+pnpm tauri dev
+
+# 构建
+pnpm tauri build
 ```
 
-### 编译运行
+### MCP 代理服务
 
 ```bash
-# 方式一：使用 make（自动设置 VCPKG_ROOT）
-make build
-make run
+cd crates/nuwax-mcp-stdio-proxy
 
-# 方式二：直接使用 cargo（需已执行 ln -s $HOME/vcpkg vcpkg 或已设置 export VCPKG_ROOT=...）
-cargo build -p nuwax-gpui-agent
-cargo run -p nuwax-gpui-agent
-cargo test -p nuwax-gpui-agent
+# 安装依赖
+npm install
+
+# 构建
+npm run build
+
+# 运行 (stdio 聚合模式)
+nuwax-mcp-stdio-proxy --config '{"mcpServers":{...}}'
+
+# 运行 (协议转换模式)
+nuwax-mcp-stdio-proxy convert http://remote-mcp-server/sse
+
+# 运行 (持久化桥接模式)
+nuwax-mcp-stdio-proxy proxy --port 18099 --config '{"mcpServers":{...}}'
 ```
 
-### 打包发布
+## 平台支持
 
-```bash
-# 安装 cargo-packager
-cargo install cargo-packager
+| 平台 | 架构 | Electron | Tauri |
+|------|------|:--------:|:-----:|
+| macOS | arm64, x86_64 | ✅ | ✅ |
+| Windows | x86_64, arm64 | ✅ | ✅ |
+| Linux | x86_64, arm64 | ✅ | ✅ |
 
-# macOS 打包 (.dmg)
-cargo packager --release
+## Electron 客户端详解
 
-# 详见 .github/workflows/release.yml
+### 技术栈
+- **主进程**: Electron + TypeScript
+- **渲染进程**: React 18 + Ant Design
+- **存储**: SQLite (better-sqlite3)
+- **构建**: Vite + electron-builder
+
+### 核心服务
+
+| 服务 | 说明 |
+|------|------|
+| Unified Agent | 统一的 ACP 引擎管理 |
+| Engine Manager | 引擎生命周期管理 |
+| MCP | MCP 服务器管理 |
+| Dependencies | 依赖包管理 |
+| Permissions | 权限控制 |
+| IM | 即时消息集成 |
+
+### 数据存储
+
 ```
+~/.nuwaclaw/
+├── engines/           # Agent 引擎
+├── workspaces/        # 会话工作空间
+├── node_modules/      # 本地 npm 包
+│   ├── .bin/         # 可执行文件
+│   └── mcp-servers/  # MCP 服务器
+├── bin/               # 应用二进制
+├── logs/              # 日志文件
+│   ├── main.log      # 主进程日志
+│   └── mcp-proxy.log # MCP 代理日志
+└── nuwaclaw.db        # SQLite 数据库
+```
+
+### IPC 通道
+
+| 分类 | 通道 |
+|------|------|
+| Session | `session:list`, `session:create`, `session:delete` |
+| Message | `message:list`, `message:add` |
+| Settings | `settings:get`, `settings:set` |
+| Agent | `agent:init`, `agent:destroy`, `agent:prompt` |
+| MCP | `mcp:install`, `mcp:uninstall`, `mcp:start`, `mcp:stop` |
+
+## MCP 代理服务详解
+
+`nuwax-mcp-stdio-proxy` 是一个 MCP 协议聚合代理，解决多 MCP 服务器集成时的生命周期管理问题。
+
+### 运行模式
+
+| 模式 | 用途 | 命令 |
+|------|------|------|
+| **stdio** | 聚合多个 MCP 服务器为单个 stdio 接口 | `nuwax-mcp-stdio-proxy --config '...'` |
+| **convert** | 将远程 MCP 服务转换为本地 stdio | `nuwax-mcp-stdio-proxy convert <url>` |
+| **proxy** | 持久化桥接，预先启动并暴露 HTTP 接口 | `nuwax-mcp-stdio-proxy proxy --port 18099` |
+
+### 核心特性
+- **就绪状态检测**: 阻塞等待 MCP 服务器就绪
+- **弹性传输**: 心跳检测、指数退避重连、请求队列
+- **集中清理**: 优雅终止所有子进程
+
+### 弹性传输参数
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `pingIntervalMs` | 20000 | 心跳间隔 |
+| `maxConsecutiveFailures` | 3 | 连续失败阈值 |
+| `maxReconnectDelayMs` | 60000 | 重连延迟上限 |
+| `maxQueueSize` | 100 | 请求队列容量 |
 
 ## 配置说明
 
-配置文件位于：
-- macOS: `~/Library/Application Support/nuwax-agent/config.toml`
-- Windows: `%APPDATA%\nuwax-agent\config.toml`
-- Linux: `~/.config/nuwax-agent/config.toml`
+### Electron 客户端配置
 
-```toml
-[server]
-# 信令服务器地址
-hbbs = "your-server:21116"
-# 中继服务器地址
-hbbr = "your-server:21117"
+首次运行时通过设置向导配置：
+1. 输入 Anthropic API Key
+2. 选择默认模型
+3. 配置 MCP 服务器
 
-[security]
-# 连接密码（加密存储）
-password_hash = "..."
+敏感配置存储在 SQLite 数据库中，不在代码中硬编码。
 
-[general]
-# 开机自启动
-auto_launch = true
-# 语言设置
-language = "zh-CN"
-# 主题模式: light, dark, system
-theme = "system"
-```
+### MCP 服务器配置示例
 
-## Feature Flags
-
-| Feature | 说明 | 默认 |
-|---------|------|------|
-| `tray` | 系统托盘支持 | ✅ |
-| `auto-launch` | 开机自启动 | ✅ |
-| `dependency-management` | 依赖自动安装 | ✅ |
-| `remote-desktop` | 远程桌面功能 | ❌ |
-| `chat-ui` | 聊天界面 | ❌ |
-| `file-transfer` | 文件传输 | ❌ |
-| `dev-mode` | 开发者日志 | ❌ |
-
-```bash
-# 启用所有功能
-cargo build -p nuwax-agent --all-features
-
-# 仅启用特定功能
-cargo build -p nuwax-agent --features "remote-desktop,chat-ui"
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/dir"]
+    },
+    "github": {
+      "url": "https://api.github.com/mcp"
+    }
+  }
+}
 ```
 
 ## 开发指南
@@ -154,93 +240,70 @@ cargo build -p nuwax-agent --features "remote-desktop,chat-ui"
 ### 目录结构
 
 ```
-crates/agent-client/src/
-├── main.rs              # 程序入口
-├── app.rs               # 应用状态管理
-├── lib.rs               # 库导出
-├── components/          # UI 组件
-│   ├── root.rs          # 根组件
-│   ├── status_bar.rs    # 状态栏
-│   ├── client_info.rs   # 客户端信息
-│   ├── settings.rs      # 设置界面
-│   ├── dependency_manager.rs  # 依赖管理
-│   ├── remote_desktop.rs      # 远程桌面
-│   ├── chat.rs          # 聊天界面
-│   └── about.rs         # 关于页面
-├── core/                # 核心逻辑
-│   ├── connection/      # 连接管理
-│   ├── dependency/      # 依赖检测/安装
-│   ├── platform/        # 平台适配
-│   ├── permissions/     # 权限管理
-│   ├── agent.rs         # Agent 任务管理
-│   ├── business_channel.rs  # 业务通道
-│   ├── crypto.rs        # 加密工具
-│   └── upgrade.rs       # 升级管理
-├── tray/                # 系统托盘
-├── i18n/                # 国际化
-├── message/             # 消息处理
-└── utils/               # 工具函数
+crates/agent-electron-client/
+├── src/
+│   ├── main/              # 主进程
+│   │   ├── main.ts        # 入口
+│   │   ├── preload.ts     # 预加载脚本
+│   │   ├── ipc/           # IPC 处理器
+│   │   └── services/      # 主进程服务
+│   ├── renderer/          # 渲染进程
+│   │   ├── main.tsx       # React 入口
+│   │   ├── App.tsx        # 主组件
+│   │   ├── components/    # React 组件
+│   │   └── services/      # 渲染进程服务
+│   └── shared/            # 共享代码
+├── resources/             # 打包资源
+├── scripts/               # 构建脚本
+└── package.json
 ```
 
 ### 运行测试
 
 ```bash
-# 单元测试
-cargo test -p nuwax-agent
+# Electron 客户端
+cd crates/agent-electron-client
+npm run test
 
-# 集成测试 (需要 data-server 运行)
-cargo test --test communication_test -- --ignored
-
-# 代码检查
-cargo clippy -p nuwax-agent
+# MCP 代理
+cd crates/nuwax-mcp-stdio-proxy
+npm run test:run
+npm run test:coverage
 ```
 
 ### 调试模式
 
 ```bash
 # 启用详细日志
-RUST_LOG=debug cargo run -p nuwax-agent
-
-# 启用开发模式
-cargo run -p nuwax-agent --features dev-mode
+RUST_LOG=debug npm run dev
 ```
 
-## 通信协议
+## GitHub Actions
 
-客户端与管理端通过 data-server (基于 RustDesk 协议) 通信：
+### CI/CD 工作流
 
+| 工作流 | 触发条件 | 说明 |
+|--------|----------|------|
+| `ci-electron.yml` | `crates/agent-electron-client/**` 变更 | Electron 测试构建 |
+| `release-electron.yml` | 推送 `electron-v*` tag | Electron 发布构建 |
+| `ci-tauri.yml` | `crates/agent-tauri-client/**` 变更 | Tauri 测试构建 |
+| `release-tauri.yml` | 推送 `v*` tag | Tauri 发布构建 |
+
+### 发布流程
+
+```bash
+# Electron 发布
+git tag electron-v0.9.0
+git push origin electron-v0.9.0
+
+# Tauri 发布
+git tag v0.1.0
+git push origin v0.1.0
 ```
-┌─────────────┐     P2P/Relay      ┌─────────────┐
-│   Client    │◄──────────────────►│    Admin    │
-│ (agent-cli) │                    │  (server)   │
-└──────┬──────┘                    └──────┬──────┘
-       │                                  │
-       │  Register/Heartbeat              │
-       ▼                                  ▼
-┌─────────────────────────────────────────────────┐
-│              data-server (hbbs/hbbr)            │
-│         信令服务 (21116) + 中继服务 (21117)      │
-└─────────────────────────────────────────────────┘
-```
-
-### 消息类型
-
-- `Handshake` - 握手协议，协商版本和能力
-- `AgentTask` - Agent 任务请求/响应
-- `FileTransfer` - 文件传输
-- `Chat` - 聊天消息
-- `Heartbeat` - 心跳保活
-
-## 安全机制
-
-- **密码加密** - 使用 AES-GCM 加密存储，密钥由机器 ID 派生
-- **通信加密** - 基于 RustDesk 的端到端加密
-- **SHA256 校验** - 升级包完整性验证
-- **权限文件** - 敏感文件设置 0600 权限 (Unix)
 
 ## 许可证
 
-[Apache License 2.0](LICENSE)
+[MIT License](LICENSE)
 
 ## 贡献指南
 
@@ -256,6 +319,7 @@ cargo run -p nuwax-agent --features dev-mode
 
 ## 相关项目
 
-- [gpui](https://github.com/zed-industries/zed) - GPU 加速 UI 框架
-- [RustDesk](https://github.com/rustdesk/rustdesk) - 开源远程桌面
-- [gpui-component](https://github.com/longbridge/gpui-component) - gpui 组件库
+- [Electron](https://www.electronjs.org/) - 跨平台桌面应用框架
+- [Tauri](https://tauri.app/) - 轻量级桌面应用框架
+- [MCP](https://modelcontextprotocol.io/) - Model Context Protocol
+- [Ant Design](https://ant.design/) - React UI 组件库
