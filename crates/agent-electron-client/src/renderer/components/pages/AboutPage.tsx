@@ -11,7 +11,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button, Progress, message, Space, Modal } from "antd";
 import { SyncOutlined, DownloadOutlined, LinkOutlined } from "@ant-design/icons";
-import { APP_DISPLAY_NAME } from "@shared/constants";
+import { APP_DISPLAY_NAME, APP_ENGLISH_NAME } from "@shared/constants";
 import type { UpdateState } from "@shared/types/updateTypes";
 
 /** 官网地址，用于关于页「官网」链接 */
@@ -324,6 +324,17 @@ export default function AboutPage() {
           }}
         >
           {APP_DISPLAY_NAME}
+        </div>
+        <div
+          style={{
+            marginTop: 8,
+            fontSize: 14,
+            letterSpacing: 0.6,
+            color: "var(--color-text-secondary)",
+            fontWeight: 600,
+          }}
+        >
+          {APP_ENGLISH_NAME}
         </div>
         <div style={{ marginTop: 8, fontSize: 16, color: "var(--color-text-secondary)", fontWeight: 500 }}>
           v{appVersion || '...'}

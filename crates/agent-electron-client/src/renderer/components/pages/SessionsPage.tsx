@@ -20,7 +20,7 @@ import {
   syncCookieAndGetNewSessionUrl,
   syncCookieAndGetChatUrl,
 } from "../../services/utils/sessionUrl";
-import { APP_DISPLAY_NAME } from "@shared/constants";
+import { APP_ENGLISH_NAME } from "@shared/constants";
 import type { DetailedSession } from "@shared/types/sessions";
 import styles from "../../styles/components/SessionsPage.module.css";
 
@@ -54,7 +54,7 @@ function SessionsPage({
     window.electronAPI?.app
       .getVersion()
       .then((version) => {
-        const ua = navigator.userAgent + ` ${APP_DISPLAY_NAME}/${version}`;
+        const ua = navigator.userAgent + ` ${APP_ENGLISH_NAME}/${version}`;
         setWebviewUA(ua);
       })
       .catch(() => {});

@@ -15,12 +15,12 @@ set -e
 # deb installs to /opt/{productName}/
 # rpm installs to /opt/{productName}/ or /usr/lib/{packageName}/
 SANDBOX_PATHS=(
-    "/opt/NuwaClaw/chrome-sandbox"
-    "/opt/NuwaClaw/resources/chrome-sandbox"
-    "/opt/nuwaclaw/chrome-sandbox"
-    "/opt/nuwaclaw/resources/chrome-sandbox"
-    "/usr/lib/nuwaclaw/chrome-sandbox"
-    "/usr/lib64/nuwaclaw/chrome-sandbox"
+    "/opt/SantiClaw/chrome-sandbox"
+    "/opt/SantiClaw/resources/chrome-sandbox"
+    "/opt/santiclaw/chrome-sandbox"
+    "/opt/santiclaw/resources/chrome-sandbox"
+    "/usr/lib/santiclaw/chrome-sandbox"
+    "/usr/lib64/santiclaw/chrome-sandbox"
 )
 
 SANDBOX_FOUND=false

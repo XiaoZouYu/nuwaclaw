@@ -347,7 +347,7 @@ describe("filterBridgeEntries", () => {
   it("过滤掉 basename 为 mcp-proxy 的绝对路径入口", () => {
     const proxyAbsPath = path.join(
       "/home",
-      ".nuwaclaw",
+      ".santiclaw",
       "node_modules",
       ".bin",
       "mcp-proxy",

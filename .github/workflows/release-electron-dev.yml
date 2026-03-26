@@ -56,7 +56,7 @@ jobs:
             echo "Using release notes from $NOTES_FILE"
             cp "$NOTES_FILE" release_notes.txt
           else
-            echo "NuwaClaw ${VERSION} (Prerelease)。请在 Assets 中下载对应平台安装包。" > release_notes.txt
+            echo "SantiClaw ${VERSION} (Prerelease)。请在 Assets 中下载对应平台安装包。" > release_notes.txt
           fi
 
       - name: Create GitHub Release
@@ -68,7 +68,7 @@ jobs:
             echo "Release $TAG already exists"
           else
             gh release create "$TAG" \
-              --title "NuwaClaw (Electron) ${{ steps.version.outputs.version }} - Prerelease" \
+              --title "SantiClaw (Electron) ${{ steps.version.outputs.version }} - Prerelease" \
               --notes-file release_notes.txt \
               --draft \
               --prerelease \
@@ -139,7 +139,7 @@ jobs:
 
       # pnpm install 会建立 workspace 链接，nuwax-mcp-stdio-proxy 通过 prepare 脚本自动构建
       - name: Install workspace dependencies
-        run: pnpm install --filter @nuwax-ai/nuwaclaw...
+        run: pnpm install --filter @nuwax-ai/santiclaw...
 
       # 为 Electron 内嵌 Node 重编 better-sqlite3，避免 Linux arm64 等平台运行时 "cannot open shared object file"
       - name: Rebuild native modules for Electron

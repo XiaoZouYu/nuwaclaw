@@ -53,13 +53,13 @@ jobs:
         run: |
           TAG="${RELEASE_TAG}"
           VERSION="${TAG#electron-v}"
-          OSS_URL_PREFIX="${OSS_CDN_BASE}/nuwaclaw-electron/${TAG}"
+          OSS_URL_PREFIX="${OSS_CDN_BASE}/santiclaw-electron/${TAG}"
           ASSETS_DIR="/tmp/release-assets"
 
           rm -f "${ASSETS_DIR}"/*.yml
 
           RELEASE_JSON=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body,createdAt 2>/dev/null || echo '{}')
-          NOTES=$(echo "$RELEASE_JSON" | jq -r '.body // "NuwaClaw 功能优化和问题修复。建议更新到最新版本以获得更好的体验。"' | head -c 500)
+          NOTES=$(echo "$RELEASE_JSON" | jq -r '.body // "SantiClaw 功能优化和问题修复。建议更新到最新版本以获得更好的体验。"' | head -c 500)
           PUB_DATE=$(echo "$RELEASE_JSON" | jq -r '.createdAt // empty')
           if [ -z "$PUB_DATE" ]; then
             PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
@@ -88,21 +88,21 @@ jobs:
 
           PLATFORMS="{}"
           echo "==> Scanning release assets for platforms..."
-          add_platform "darwin-aarch64"     "NuwaClaw-${VERSION}-arm64.dmg"
-          add_platform "darwin-aarch64-zip" "NuwaClaw-${VERSION}-arm64-mac.zip"
-          add_platform "darwin-x86_64"      "NuwaClaw-${VERSION}.dmg"
-          add_platform "darwin-x86_64-zip"  "NuwaClaw-${VERSION}-mac.zip"
-          add_platform "windows-x86_64"      "NuwaClaw.Setup.${VERSION}.exe"
-          add_platform "windows-x86_64-nsis" "NuwaClaw.Setup.${VERSION}.exe"
-          add_platform "windows-x86_64-msi"  "NuwaClaw.${VERSION}.msi"
-          add_platform "linux-x86_64"          "NuwaClaw-${VERSION}.AppImage"
-          add_platform "linux-x86_64-appimage" "NuwaClaw-${VERSION}.AppImage"
-          add_platform "linux-x86_64-deb"      "NuwaClaw-${VERSION}-amd64.deb"
-          add_platform "linux-x86_64-rpm"      "NuwaClaw-${VERSION}-x86_64.rpm"
-          add_platform "linux-aarch64"          "NuwaClaw-${VERSION}-arm64.AppImage"
-          add_platform "linux-aarch64-appimage" "NuwaClaw-${VERSION}-arm64.AppImage"
-          add_platform "linux-aarch64-deb"      "NuwaClaw-${VERSION}-arm64.deb"
-          add_platform "linux-aarch64-rpm"      "NuwaClaw-${VERSION}-aarch64.rpm"
+          add_platform "darwin-aarch64"     "SantiClaw-${VERSION}-arm64.dmg"
+          add_platform "darwin-aarch64-zip" "SantiClaw-${VERSION}-arm64-mac.zip"
+          add_platform "darwin-x86_64"      "SantiClaw-${VERSION}.dmg"
+          add_platform "darwin-x86_64-zip"  "SantiClaw-${VERSION}-mac.zip"
+          add_platform "windows-x86_64"      "SantiClaw.Setup.${VERSION}.exe"
+          add_platform "windows-x86_64-nsis" "SantiClaw.Setup.${VERSION}.exe"
+          add_platform "windows-x86_64-msi"  "SantiClaw.${VERSION}.msi"
+          add_platform "linux-x86_64"          "SantiClaw-${VERSION}.AppImage"
+          add_platform "linux-x86_64-appimage" "SantiClaw-${VERSION}.AppImage"
+          add_platform "linux-x86_64-deb"      "SantiClaw-${VERSION}-amd64.deb"
+          add_platform "linux-x86_64-rpm"      "SantiClaw-${VERSION}-x86_64.rpm"
+          add_platform "linux-aarch64"          "SantiClaw-${VERSION}-arm64.AppImage"
+          add_platform "linux-aarch64-appimage" "SantiClaw-${VERSION}-arm64.AppImage"
+          add_platform "linux-aarch64-deb"      "SantiClaw-${VERSION}-arm64.deb"
+          add_platform "linux-aarch64-rpm"      "SantiClaw-${VERSION}-aarch64.rpm"
 
           if [ "$(echo "$PLATFORMS" | jq 'length')" = "0" ]; then
             echo "::warning::No exact filename matches, falling back to fuzzy scan"
@@ -178,7 +178,7 @@ jobs:
           OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
         run: |
           TAG="${RELEASE_TAG}"
-          OSS_PREFIX="nuwaclaw-electron/${TAG}"
+          OSS_PREFIX="santiclaw-electron/${TAG}"
           for file in /tmp/release-assets/*; do
             filename=$(basename "$file")
             echo "Uploading: ${filename}"
@@ -195,12 +195,12 @@ jobs:
           OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
         run: |
           TAG="${RELEASE_TAG}"
-          ossutil cp --force /tmp/latest.json "${OSS_BUCKET}/nuwaclaw-electron/${TAG}/latest.json" \
+          ossutil cp --force /tmp/latest.json "${OSS_BUCKET}/santiclaw-electron/${TAG}/latest.json" \
             --endpoint "$OSS_ENDPOINT" \
             --region "$OSS_REGION" \
             --access-key-id "$OSS_ACCESS_KEY_ID" \
             --access-key-secret "$OSS_ACCESS_KEY_SECRET"
-          ossutil cp --force /tmp/latest.json "${OSS_BUCKET}/nuwaclaw-electron/latest/latest.json" \
+          ossutil cp --force /tmp/latest.json "${OSS_BUCKET}/santiclaw-electron/latest/latest.json" \
             --endpoint "$OSS_ENDPOINT" \
             --region "$OSS_REGION" \
             --access-key-id "$OSS_ACCESS_KEY_ID" \
@@ -209,7 +209,7 @@ jobs:
 
       - name: Verify OSS upload
         run: |
-          VERIFY_URL="${OSS_CDN_BASE}/nuwaclaw-electron/latest/latest.json"
+          VERIFY_URL="${OSS_CDN_BASE}/santiclaw-electron/latest/latest.json"
           HTTP_STATUS=$(curl -sS -o /tmp/oss-latest.json -w "%{http_code}" "$VERIFY_URL")
           if [ "$HTTP_STATUS" = "200" ]; then
             echo "==> latest.json: OK (HTTP ${HTTP_STATUS})"

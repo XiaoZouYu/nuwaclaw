@@ -7,6 +7,7 @@
 import { describe, it, expect } from "vitest";
 import {
   APP_DISPLAY_NAME,
+  APP_ENGLISH_NAME,
   APP_NAME_IDENTIFIER,
   APP_DATA_DIR_NAME,
   DEFAULT_MCP_PROXY_PORT,
@@ -54,12 +55,13 @@ import {
 describe("Constants", () => {
   describe("App Identity", () => {
     it("should have consistent app name", () => {
-      expect(APP_DISPLAY_NAME).toBe("NuwaClaw");
-      expect(APP_NAME_IDENTIFIER).toBe("nuwaclaw");
+      expect(APP_DISPLAY_NAME).toBe("三体大龙虾");
+      expect(APP_ENGLISH_NAME).toBe("SantiClaw");
+      expect(APP_NAME_IDENTIFIER).toBe("santiclaw");
     });
 
     it("should have app data dir name with dot prefix", () => {
-      expect(APP_DATA_DIR_NAME).toBe(".nuwaclaw");
+      expect(APP_DATA_DIR_NAME).toBe(".santiclaw");
     });
   });
 

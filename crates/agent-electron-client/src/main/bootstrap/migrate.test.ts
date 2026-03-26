@@ -2,11 +2,12 @@
  * 单元测试: migrate (数据目录迁移)
  *
  * 覆盖迁移路径:
- * 1. .nuwax-agent → .nuwaclaw (优先级最高)
- * 2. .nuwaxbot → .nuwaclaw
- * 3. 无旧目录 → 跳过
- * 4. 新目录已存在但 DB 为空 → 从旧目录导入 DB
- * 5. 新目录已存在且 DB 有数据 → 跳过
+ * 1. .nuwaclaw → .santiclaw (优先级最高)
+ * 2. .nuwax-agent → .santiclaw
+ * 3. .nuwaxbot → .santiclaw
+ * 4. 无旧目录 → 跳过
+ * 5. 新目录已存在但 DB 为空 → 从旧目录导入 DB
+ * 6. 新目录已存在且 DB 有数据 → 跳过
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -69,7 +70,7 @@ describe('migrateDataDir', () => {
   it('should skip when new directory exists and DB has data', async () => {
     // new dir exists, new DB exists and has data
     mockExistsSync.mockImplementation((p: string) => {
-      if (p.includes('.nuwaclaw')) return true;
+      if (p.includes('.santiclaw')) return true;
       return false;
     });
     // DB has data (count > 0)
@@ -83,11 +84,11 @@ describe('migrateDataDir', () => {
   });
 
   it('should import legacy DB when new dir exists but DB is empty', async () => {
-    const newDb = path.join('/mock/home', '.nuwaclaw', 'nuwaclaw.db');
-    const oldDb = path.join('/mock/home', '.nuwaxbot', 'nuwaxbot.db');
+    const newDb = path.join('/mock/home', '.santiclaw', 'santiclaw.db');
+    const oldDb = path.join('/mock/home', '.nuwaclaw', 'nuwaclaw.db');
 
     mockExistsSync.mockImplementation((p: string) => {
-      if (p === path.join('/mock/home', '.nuwaclaw')) return true;
+      if (p === path.join('/mock/home', '.santiclaw')) return true;
       if (p === newDb) return true;
       if (p === oldDb) return true;
       if (p.endsWith('-wal') || p.endsWith('-shm')) return false;
@@ -106,12 +107,39 @@ describe('migrateDataDir', () => {
     expect(mockRenameSync).not.toHaveBeenCalled();
   });
 
-  it('should migrate .nuwax-agent → .nuwaclaw (priority 1)', async () => {
+  it('should migrate .nuwaclaw → .santiclaw (priority 1)', async () => {
     mockExistsSync.mockImplementation((p: string) => {
+      if (p === path.join('/mock/home', '.santiclaw')) return false;
+      if (p === path.join('/mock/home', '.nuwaclaw')) return true;
+      if (p.endsWith('nuwaclaw.db')) return true;
+      if (p.endsWith('santiclaw.db')) return false;
+      if (p.endsWith('-wal') || p.endsWith('-shm')) return false;
+      return false;
+    });
+
+    const { migrateDataDir } = await import('./migrate');
+    migrateDataDir();
+
+    // Directory rename
+    expect(mockRenameSync).toHaveBeenCalledWith(
+      path.join('/mock/home', '.nuwaclaw'),
+      path.join('/mock/home', '.santiclaw'),
+    );
+
+    // DB rename
+    expect(mockRenameSync).toHaveBeenCalledWith(
+      path.join('/mock/home', '.santiclaw', 'nuwaclaw.db'),
+      path.join('/mock/home', '.santiclaw', 'santiclaw.db'),
+    );
+  });
+
+  it('should migrate .nuwax-agent → .santiclaw (priority 2)', async () => {
+    mockExistsSync.mockImplementation((p: string) => {
+      if (p === path.join('/mock/home', '.santiclaw')) return false;
       if (p === path.join('/mock/home', '.nuwaclaw')) return false;
       if (p === path.join('/mock/home', '.nuwax-agent')) return true;
       if (p.endsWith('nuwax-agent.db')) return true;
-      if (p.endsWith('nuwaclaw.db')) return false;
+      if (p.endsWith('santiclaw.db')) return false;
       if (p.endsWith('-wal') || p.endsWith('-shm')) return false;
       return false;
     });
@@ -122,25 +150,26 @@ describe('migrateDataDir', () => {
     // Directory rename
     expect(mockRenameSync).toHaveBeenCalledWith(
       path.join('/mock/home', '.nuwax-agent'),
-      path.join('/mock/home', '.nuwaclaw'),
+      path.join('/mock/home', '.santiclaw'),
     );
 
     // DB rename
     expect(mockRenameSync).toHaveBeenCalledWith(
-      path.join('/mock/home', '.nuwaclaw', 'nuwax-agent.db'),
-      path.join('/mock/home', '.nuwaclaw', 'nuwaclaw.db'),
+      path.join('/mock/home', '.santiclaw', 'nuwax-agent.db'),
+      path.join('/mock/home', '.santiclaw', 'santiclaw.db'),
     );
   });
 
-  it('should migrate .nuwaxbot → .nuwaclaw (priority 2)', async () => {
+  it('should migrate .nuwaxbot → .santiclaw (priority 3)', async () => {
     mockExistsSync.mockImplementation((p: string) => {
+      if (p === path.join('/mock/home', '.santiclaw')) return false;
       if (p === path.join('/mock/home', '.nuwaclaw')) return false;
       if (p === path.join('/mock/home', '.nuwax-agent')) return false;
       if (p === path.join('/mock/home', '.nuwaxbot')) return true;
       if (p.endsWith('nuwaxbot.db')) return true;
-      if (p.endsWith('nuwaclaw.db')) return false;
+      if (p.endsWith('santiclaw.db')) return false;
       if (p.endsWith('nuwaxbot.json')) return true;
-      if (p.endsWith('nuwaclaw.json')) return false;
+      if (p.endsWith('santiclaw.json')) return false;
       if (p.endsWith('-wal') || p.endsWith('-shm')) return false;
       return false;
     });
@@ -148,33 +177,28 @@ describe('migrateDataDir', () => {
     const { migrateDataDir } = await import('./migrate');
     migrateDataDir();
 
-    // Directory rename
     expect(mockRenameSync).toHaveBeenCalledWith(
       path.join('/mock/home', '.nuwaxbot'),
-      path.join('/mock/home', '.nuwaclaw'),
+      path.join('/mock/home', '.santiclaw'),
     );
-
-    // DB rename
     expect(mockRenameSync).toHaveBeenCalledWith(
-      path.join('/mock/home', '.nuwaclaw', 'nuwaxbot.db'),
-      path.join('/mock/home', '.nuwaclaw', 'nuwaclaw.db'),
+      path.join('/mock/home', '.santiclaw', 'nuwaxbot.db'),
+      path.join('/mock/home', '.santiclaw', 'santiclaw.db'),
     );
-
-    // Config rename
     expect(mockRenameSync).toHaveBeenCalledWith(
-      path.join('/mock/home', '.nuwaclaw', 'nuwaxbot.json'),
-      path.join('/mock/home', '.nuwaclaw', 'nuwaclaw.json'),
+      path.join('/mock/home', '.santiclaw', 'nuwaxbot.json'),
+      path.join('/mock/home', '.santiclaw', 'santiclaw.json'),
     );
   });
 
   it('should also rename WAL and SHM files if they exist', async () => {
     mockExistsSync.mockImplementation((p: string) => {
-      if (p === path.join('/mock/home', '.nuwaclaw')) return false;
-      if (p === path.join('/mock/home', '.nuwax-agent')) return true;
-      if (p.endsWith('nuwax-agent.db')) return true;
-      if (p.endsWith('nuwaclaw.db')) return false;
-      if (p.endsWith('nuwax-agent.db-wal')) return true;
-      if (p.endsWith('nuwax-agent.db-shm')) return true;
+      if (p === path.join('/mock/home', '.santiclaw')) return false;
+      if (p === path.join('/mock/home', '.nuwaclaw')) return true;
+      if (p.endsWith('nuwaclaw.db')) return true;
+      if (p.endsWith('santiclaw.db')) return false;
+      if (p.endsWith('nuwaclaw.db-wal')) return true;
+      if (p.endsWith('nuwaclaw.db-shm')) return true;
       return false;
     });
 
@@ -182,35 +206,40 @@ describe('migrateDataDir', () => {
     migrateDataDir();
 
     expect(mockRenameSync).toHaveBeenCalledWith(
-      path.join('/mock/home', '.nuwaclaw', 'nuwax-agent.db-wal'),
-      path.join('/mock/home', '.nuwaclaw', 'nuwaclaw.db-wal'),
+      path.join('/mock/home', '.santiclaw', 'nuwaclaw.db-wal'),
+      path.join('/mock/home', '.santiclaw', 'santiclaw.db-wal'),
     );
     expect(mockRenameSync).toHaveBeenCalledWith(
-      path.join('/mock/home', '.nuwaclaw', 'nuwax-agent.db-shm'),
-      path.join('/mock/home', '.nuwaclaw', 'nuwaclaw.db-shm'),
+      path.join('/mock/home', '.santiclaw', 'nuwaclaw.db-shm'),
+      path.join('/mock/home', '.santiclaw', 'santiclaw.db-shm'),
     );
   });
 
-  it('should prefer .nuwax-agent over .nuwaxbot when both exist', async () => {
+  it('should prefer .nuwaclaw over other legacy dirs when multiple exist', async () => {
     mockExistsSync.mockImplementation((p: string) => {
-      if (p === path.join('/mock/home', '.nuwaclaw')) return false;
+      if (p === path.join('/mock/home', '.santiclaw')) return false;
+      if (p === path.join('/mock/home', '.nuwaclaw')) return true;
       if (p === path.join('/mock/home', '.nuwax-agent')) return true;
       if (p === path.join('/mock/home', '.nuwaxbot')) return true;
-      if (p.endsWith('nuwax-agent.db')) return true;
-      if (p.endsWith('nuwaclaw.db')) return false;
+      if (p.endsWith('nuwaclaw.db')) return true;
+      if (p.endsWith('santiclaw.db')) return false;
       return false;
     });
 
     const { migrateDataDir } = await import('./migrate');
     migrateDataDir();
 
-    // Should rename .nuwax-agent, NOT .nuwaxbot
+    // Should rename .nuwaclaw, not the older dirs
     expect(mockRenameSync).toHaveBeenCalledWith(
-      path.join('/mock/home', '.nuwax-agent'),
       path.join('/mock/home', '.nuwaclaw'),
+      path.join('/mock/home', '.santiclaw'),
     );
     expect(mockRenameSync).not.toHaveBeenCalledWith(
       path.join('/mock/home', '.nuwaxbot'),
+      expect.anything(),
+    );
+    expect(mockRenameSync).not.toHaveBeenCalledWith(
+      path.join('/mock/home', '.nuwax-agent'),
       expect.anything(),
     );
   });
@@ -258,8 +287,21 @@ describe('migrateSettingsPaths', () => {
     migrateSettingsPaths();
 
     expect(mockWriteSetting).toHaveBeenCalledWith('step1_config', {
-      workspaceDir: path.join('/mock/home', '.nuwaclaw', 'workspace'),
+      workspaceDir: path.join('/mock/home', '.santiclaw', 'workspace'),
       serverHost: 'example.com',
+    });
+  });
+
+  it('should update workspaceDir from .nuwaclaw prefix', async () => {
+    mockReadSetting.mockReturnValue({
+      workspaceDir: path.join('/mock/home', '.nuwaclaw', 'workspace'),
+    });
+
+    const { migrateSettingsPaths } = await import('./migrate');
+    migrateSettingsPaths();
+
+    expect(mockWriteSetting).toHaveBeenCalledWith('step1_config', {
+      workspaceDir: path.join('/mock/home', '.santiclaw', 'workspace'),
     });
   });
 
@@ -272,7 +314,7 @@ describe('migrateSettingsPaths', () => {
     migrateSettingsPaths();
 
     expect(mockWriteSetting).toHaveBeenCalledWith('step1_config', {
-      workspaceDir: path.join('/mock/home', '.nuwaclaw', 'workspace'),
+      workspaceDir: path.join('/mock/home', '.santiclaw', 'workspace'),
     });
   });
 });

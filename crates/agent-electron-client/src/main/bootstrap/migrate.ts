@@ -1,5 +1,5 @@
 /**
- * 数据目录迁移：~/.nuwax-agent 或 ~/.nuwaxbot → ~/.nuwaclaw
+ * 数据目录迁移：~/.nuwaclaw / ~/.nuwax-agent / ~/.nuwaxbot → ~/.santiclaw
  *
  * 必须在 initDatabase() 之前同步执行，确保 DB 从新路径打开。
  *
@@ -7,7 +7,7 @@
  * 1. 新目录不存在 → 整体 rename 旧目录
  * 2. 新目录已存在但 DB 为空（依赖安装等先创建了目录）→ 从旧目录复制 DB
  *
- * 优先级：.nuwax-agent > .nuwaxbot（找到第一个存在的旧目录即迁移）
+ * 优先级：.nuwaclaw > .nuwax-agent > .nuwaxbot（找到第一个存在的旧目录即迁移）
  */
 
 import * as fs from 'fs';
@@ -25,6 +25,7 @@ interface LegacySource {
 }
 
 const LEGACY_SOURCES: LegacySource[] = [
+  { dirName: '.nuwaclaw',   dbName: 'nuwaclaw.db',   configName: 'nuwaclaw.json' },
   { dirName: '.nuwax-agent', dbName: 'nuwax-agent.db', configName: null },
   { dirName: '.nuwaxbot',    dbName: 'nuwaxbot.db',    configName: 'nuwaxbot.json' },
 ];
@@ -164,7 +165,7 @@ function importLegacyDb(home: string, newDb: string): void {
 export function migrateSettingsPaths(): void {
   const home = app.getPath('home');
   const newPrefix = path.join(home, `.${APP_NAME_IDENTIFIER}`);
-  const LEGACY_DIR_NAMES = ['.nuwax-agent', '.nuwaxbot'];
+  const LEGACY_DIR_NAMES = ['.nuwaclaw', '.nuwax-agent', '.nuwaxbot'];
 
   const step1Config = readSetting('step1_config') as Record<string, unknown> | null;
   if (!step1Config || typeof step1Config.workspaceDir !== 'string') return;

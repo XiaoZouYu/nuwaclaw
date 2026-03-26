@@ -77,7 +77,7 @@ function freezeDate(dateStr: string) {
   vi.setSystemTime(frozen);
 }
 
-const LOG_DIR = path.join("/mock/home", ".nuwaclaw", "logs");
+const LOG_DIR = path.join("/mock/home", ".santiclaw", "logs");
 
 // ── Tests ──────────────────────────────────────────────────
 

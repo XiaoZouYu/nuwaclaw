@@ -1,7 +1,7 @@
 {
-  "name": "@nuwax-ai/nuwaclaw",
-  "version": "0.9.1",
-  "description": "NuwaClaw Desktop Client (Electron)",
+  "name": "@nuwax-ai/santiclaw",
+  "version": "1.0.1",
+  "description": "SantiClaw Desktop Client (Electron)",
   "main": "dist/main/main.js",
   "author": "Nuwax Team",
   "license": "MIT",
@@ -96,8 +96,8 @@
     "wait-on": "^8.0.2"
   },
   "build": {
-    "appId": "com.nuwax-ai.nuwaclaw",
-    "productName": "NuwaClaw",
+    "appId": "com.nuwax-ai.santiclaw",
+    "productName": "SantiClaw",
     "afterSign": "scripts/build/after-sign.js",
     "electronLanguages": [
       "en",
@@ -200,7 +200,7 @@
       "entitlementsInherit": "build/entitlements.mac.plist",
       "hardenedRuntime": true,
       "extendInfo": {
-        "CFBundleIdentifier": "com.nuwax.agent",
+        "CFBundleIdentifier": "com.nuwax-ai.santiclaw",
         "NSDesktopFolderUsageDescription": "需要访问桌面文件夹以支持文件操作",
         "NSDocumentsFolderUsageDescription": "需要访问文档文件夹以支持文件操作",
         "NSDownloadsFolderUsageDescription": "需要访问下载文件夹以支持文件操作"
@@ -276,12 +276,12 @@
       "maintainer": "Nuwax Team"
     },
     "deb": {
-      "packageName": "nuwaclaw",
+      "packageName": "santiclaw",
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "afterInstall": "scripts/linux/postinst.sh"
     },
     "rpm": {
-      "packageName": "nuwaclaw",
+      "packageName": "santiclaw",
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "afterInstall": "scripts/linux/postinst.sh"
     },
