@@ -1,7 +1,10 @@
 # Electron 桌面客户端 — 正式版本发布
 # 与 Tauri 客户端完全分开：使用独立 tag 与独立 GitHub Release，不共用 v* tag。
 #
-# 触发：推送 tag electron-v* → 构建并创建 Release。OSS 同步请用 sync-oss.sh。
+# 触发：
+#   - 推送 tag electron-v* → 构建并创建 Release
+#   - 手动触发 action=release → 按指定 tag 构建并创建 Release
+#   - 手动触发 action=sync_oss → 仅将指定 tag 的 Release 资产同步到 OSS
 #
 # 支持平台：
 #   - macOS arm64（macos-latest）
@@ -24,6 +27,20 @@ on:
   push:
     tags:
       - "electron-v*"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose release build or OSS sync"
+        required: true
+        default: "release"
+        type: choice
+        options:
+          - release
+          - sync_oss
+      tag:
+        description: "Release tag (e.g. electron-v1.0.1)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -31,9 +48,10 @@ permissions:
 jobs:
   prepare:
     name: Prepare release
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.action == 'release')
     runs-on: ubuntu-latest
     outputs:
+      tag: ${{ steps.version.outputs.tag }}
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
@@ -41,16 +59,21 @@ jobs:
 
       - name: Get version from tag
         id: version
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          VERSION="${GITHUB_REF_NAME#electron-v}"
+          TAG="${RELEASE_TAG}"
+          VERSION="${TAG#electron-v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Electron release tag: $TAG"
           echo "Electron release version: $VERSION"
 
       - name: Read release notes
         id: notes
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          TAG="${{ github.ref_name }}"
+          TAG="${{ steps.version.outputs.tag }}"
           NOTES_FILE="release-notes/${TAG}.md"
           if [ -f "$NOTES_FILE" ]; then
             echo "Using release notes from $NOTES_FILE"
@@ -63,7 +86,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${{ steps.version.outputs.tag }}"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" 2>/dev/null; then
             echo "Release $TAG already exists"
           else
@@ -77,7 +100,7 @@ jobs:
   build-electron:
     name: Build Electron (${{ matrix.platform }} ${{ matrix.arch }})
     needs: prepare
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.action == 'release')
     strategy:
       fail-fast: false
       matrix:
@@ -245,7 +268,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${{ needs.prepare.outputs.tag }}"
           VERSION="${{ needs.prepare.outputs.version }}"
           OUT_DIR="crates/agent-electron-client/release/${VERSION}"
           if [ ! -d "$OUT_DIR" ]; then
@@ -260,10 +283,10 @@ jobs:
           done
 
   # ==================== 同步到阿里云 OSS ====================
-  # 手动触发：workflow_dispatch 输入 tag（如 electron-v0.8.0）
+  # 手动触发：workflow_dispatch 选择 action=sync_oss 并输入 tag（如 electron-v1.0.1）
   sync-to-oss:
     name: Sync release assets to Alibaba Cloud OSS
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'sync_oss'
     runs-on: ubuntu-latest
     continue-on-error: true
     env:
