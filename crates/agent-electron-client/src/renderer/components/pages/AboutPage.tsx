@@ -15,7 +15,7 @@ import { APP_DISPLAY_NAME, APP_ENGLISH_NAME } from "@shared/constants";
 import type { UpdateState } from "@shared/types/updateTypes";
 
 /** 官网地址，用于关于页「官网」链接 */
-const OFFICIAL_WEBSITE_URL = "https://oss.console.aliyun.com/";
+const OFFICIAL_WEBSITE_URL = "https://www.santisaas.com/";
 
 /** macOS/Linux 无 download-progress 时，模拟进度从 0 增长到该值（%） */
 const SIMULATED_PROGRESS_CAP = 90;
