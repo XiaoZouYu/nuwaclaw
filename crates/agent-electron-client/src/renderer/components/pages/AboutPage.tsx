@@ -15,7 +15,7 @@ import { APP_DISPLAY_NAME, APP_ENGLISH_NAME } from "@shared/constants";
 import type { UpdateState } from "@shared/types/updateTypes";
 
 /** 官网地址，用于关于页「官网」链接 */
-const OFFICIAL_WEBSITE_URL = "https://nuwax.com";
+const OFFICIAL_WEBSITE_URL = "https://oss.console.aliyun.com/";
 
 /** macOS/Linux 无 download-progress 时，模拟进度从 0 增长到该值（%） */
 const SIMULATED_PROGRESS_CAP = 90;
@@ -349,7 +349,7 @@ export default function AboutPage() {
         >
           跨平台 AI 智能体桌面客户端
         </div>
-        {/* 官网链接：点击在系统浏览器打开 nuwax.com */}
+        {/* 官网链接：点击在系统浏览器打开官网 */}
         <div style={{ marginTop: 12 }}>
           <span
             role="button"
