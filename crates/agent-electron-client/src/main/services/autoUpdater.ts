@@ -31,7 +31,7 @@ import {
 // ==================== OSS latest.json ====================
 
 const OSS_BASE =
-  "https://santisaas.oss-rg-china-mainland.aliyuncs.com/santiclaw-electron";
+  "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron";
 const OSS_LATEST_JSON_URL = `${OSS_BASE}/latest/latest.json`;
 
 /** Squirrel.Mac 在只读卷（如从「下载」直接打开）上无法就地更新时的错误信息特征 */

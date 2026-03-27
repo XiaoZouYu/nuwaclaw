@@ -21,10 +21,10 @@ jobs:
     name: Sync release assets to Alibaba Cloud OSS
     runs-on: ubuntu-latest
     env:
-      OSS_ENDPOINT: "https://oss-rg-china-mainland.aliyuncs.com"
-      OSS_REGION: "rg-china-mainland"
+      OSS_ENDPOINT: "https://oss-cn-chengdu.aliyuncs.com"
+      OSS_REGION: "cn-chengdu"
       OSS_BUCKET: "oss://santisaas"
-      OSS_CDN_BASE: "https://santisaas.oss-rg-china-mainland.aliyuncs.com"
+      OSS_CDN_BASE: "https://santisaas.oss-cn-chengdu.aliyuncs.com"
       RELEASE_TAG: ${{ inputs.tag }}
     steps:
       - name: Install ossutil v2
@@ -47,7 +47,7 @@ jobs:
 
       - name: Generate latest.json and platform yml from assets
         env:
-          OSS_CDN_BASE: "https://santisaas.oss-rg-china-mainland.aliyuncs.com"
+          OSS_CDN_BASE: "https://santisaas.oss-cn-chengdu.aliyuncs.com"
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
           TAG="${RELEASE_TAG}"
