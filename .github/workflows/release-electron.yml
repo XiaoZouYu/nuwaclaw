@@ -288,12 +288,11 @@ jobs:
     name: Sync release assets to Alibaba Cloud OSS
     if: github.event_name == 'workflow_dispatch' && inputs.action == 'sync_oss'
     runs-on: ubuntu-latest
-    continue-on-error: true
     env:
       OSS_ENDPOINT: "https://oss-rg-china-mainland.aliyuncs.com"
       OSS_REGION: "rg-china-mainland"
-      OSS_BUCKET: "oss://nuwa-packages"
-      OSS_CDN_BASE: "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com"
+      OSS_BUCKET: "oss://santisaas"
+      OSS_CDN_BASE: "https://santisaas.oss-rg-china-mainland.aliyuncs.com"
       RELEASE_TAG: ${{ inputs.tag }}
     steps:
       - name: Install ossutil v2
@@ -318,7 +317,7 @@ jobs:
       # latest-mac.yml、latest-linux.yml、latest-linux-arm64.yml、latest-linux-x64.yml、latest.yml；写入 release-assets 后一并上传。
       - name: Generate latest.json and platform yml from assets
         env:
-          OSS_CDN_BASE: "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com"
+          OSS_CDN_BASE: "https://santisaas.oss-rg-china-mainland.aliyuncs.com"
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
           TAG="${RELEASE_TAG}"
