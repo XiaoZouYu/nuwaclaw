@@ -74,7 +74,7 @@ describe('readQuickInitConfig', () => {
   it('should read config from JSON with all fields', async () => {
     const json = {
       quickInit: {
-        serverHost: 'https://agent.nuwax.com',
+        serverHost: 'https://www.santisaas.com/',
         savedKey: 'key-123',
         username: 'user@test.com',
         agentPort: 9001,
@@ -89,7 +89,7 @@ describe('readQuickInitConfig', () => {
     const config = readQuickInitConfig();
 
     expect(config).toEqual({
-      serverHost: 'https://agent.nuwax.com',
+      serverHost: 'https://www.santisaas.com/',
       savedKey: 'key-123',
       username: 'user@test.com',
       agentPort: 9001,
@@ -101,7 +101,7 @@ describe('readQuickInitConfig', () => {
   it('should fill defaults for optional JSON fields', async () => {
     const json = {
       quickInit: {
-        serverHost: 'https://agent.nuwax.com',
+        serverHost: 'https://www.santisaas.com/',
         savedKey: 'key-123',
       },
     };
@@ -112,7 +112,7 @@ describe('readQuickInitConfig', () => {
     const config = readQuickInitConfig();
 
     expect(config).not.toBeNull();
-    expect(config!.serverHost).toBe('https://agent.nuwax.com');
+    expect(config!.serverHost).toBe('https://www.santisaas.com/');
     expect(config!.savedKey).toBe('key-123');
     expect(config!.username).toBe('');
     expect(config!.agentPort).toBe(60006);
@@ -124,7 +124,7 @@ describe('readQuickInitConfig', () => {
     const json = {
       quickInit: {
         enabled: false,
-        serverHost: 'https://agent.nuwax.com',
+        serverHost: 'https://www.santisaas.com/',
         savedKey: 'key-123',
       },
     };
@@ -139,7 +139,7 @@ describe('readQuickInitConfig', () => {
     const json = {
       quickInit: {
         enabled: true,
-        serverHost: 'https://agent.nuwax.com',
+        serverHost: 'https://www.santisaas.com/',
         savedKey: 'key-123',
       },
     };

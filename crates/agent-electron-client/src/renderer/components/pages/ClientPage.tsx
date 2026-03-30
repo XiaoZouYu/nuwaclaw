@@ -619,7 +619,7 @@ function ClientPage({
               prefix={<GlobalOutlined />}
               value={loginDomain}
               onChange={(e) => setLoginDomain(e.target.value)}
-              placeholder="服务域名（例如：https://agent.nuwax.com）"
+              placeholder="服务域名（例如：https://www.santisaas.com/）"
               allowClear
               autoComplete="off"
               spellCheck={false}

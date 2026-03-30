@@ -4,14 +4,14 @@ import { hasRequiredQuickInitFields } from './quickInit';
 describe('hasRequiredQuickInitFields', () => {
   it('should return true when serverHost and savedKey are present', () => {
     expect(hasRequiredQuickInitFields({
-      serverHost: 'https://agent.nuwax.com',
+      serverHost: 'https://www.santisaas.com/',
       savedKey: 'key-123',
     })).toBe(true);
   });
 
   it('should return true with all fields present', () => {
     expect(hasRequiredQuickInitFields({
-      serverHost: 'https://agent.nuwax.com',
+      serverHost: 'https://www.santisaas.com/',
       savedKey: 'key-123',
       username: 'user@example.com',
       agentPort: 60001,
@@ -25,7 +25,7 @@ describe('hasRequiredQuickInitFields', () => {
   });
 
   it('should return false when savedKey is missing', () => {
-    expect(hasRequiredQuickInitFields({ serverHost: 'https://agent.nuwax.com' })).toBe(false);
+    expect(hasRequiredQuickInitFields({ serverHost: 'https://www.santisaas.com/' })).toBe(false);
   });
 
   it('should return false when serverHost is empty string', () => {
@@ -33,7 +33,7 @@ describe('hasRequiredQuickInitFields', () => {
   });
 
   it('should return false when savedKey is empty string', () => {
-    expect(hasRequiredQuickInitFields({ serverHost: 'https://agent.nuwax.com', savedKey: '' })).toBe(false);
+    expect(hasRequiredQuickInitFields({ serverHost: 'https://www.santisaas.com/', savedKey: '' })).toBe(false);
   });
 
   it('should return false for null', () => {

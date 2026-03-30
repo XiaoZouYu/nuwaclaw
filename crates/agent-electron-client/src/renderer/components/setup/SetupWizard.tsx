@@ -505,7 +505,7 @@ function SetupWizard({ onComplete, mockApi, skipDependencyCheck, mockLoggedIn }:
                 prefix={<GlobalOutlined />}
                 value={domain || step1Config.serverHost}
                 onChange={(e) => setDomain(e.target.value)}
-                placeholder="例如：https://agent.nuwax.com"
+                placeholder="例如：https://www.santisaas.com/"
                 autoComplete="off"
                 spellCheck={false}
               />

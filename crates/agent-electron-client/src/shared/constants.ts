@@ -52,7 +52,7 @@ export const LOCAL_HOST_URL = "http://127.0.0.1";
 export const DEFAULT_ANTHROPIC_API_URL = "https://api.anthropic.com";
 
 /** 默认后端服务器地址 */
-export const DEFAULT_SERVER_HOST = "https://agent.nuwax.com";
+export const DEFAULT_SERVER_HOST = "https://www.santisaas.com/";
 
 // ==================== AI 默认配置 ====================
 
