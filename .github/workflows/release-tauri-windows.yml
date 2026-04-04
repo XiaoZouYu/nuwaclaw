@@ -88,9 +88,14 @@ jobs:
       # ---- 私有 Git 仓库认证（nuwax-ai 组织下的 rcoder, nuwax-rustdesk 等） ----
       # Settings → Secrets 配置 GH_PAT（拉取私有依赖 + Release 操作用同一 Token 时需 Contents: Read + Write）
       - name: Configure git credentials for private repos
-        if: ${{ secrets.GH_PAT != '' }}
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
+          if [ -n "${GH_PAT:-}" ]; then
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+          else
+            echo "GH_PAT not set, skip private repo credential override"
+          fi
 
       # ---- protobuf 编译器（shared_types 的 prost-build 需要） ----
       - name: Install protoc (Windows)
