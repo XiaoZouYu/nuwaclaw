@@ -19,7 +19,7 @@ import {
 /**
  * 获取构建时环境
  * - 'test': 测试环境 (testagent.xspaceagi.com)
- * - 'prod': 生产环境 (agent.nuwax.com)
+ * - 'prod': 生产环境 (www.santisaas.com)
  * - 'local': 本地开发环境
  */
 export function getBuildEnv(): "test" | "prod" | "local" {
@@ -166,10 +166,10 @@ export function getDefaultScenes(): SceneConfig[] {
     {
       id: "prod",
       name: "生产环境",
-      description: "生产服务器 (agent.nuwax.com)",
+      description: "生产服务器 (www.santisaas.com)",
       isDefault: buildEnv === "prod",
       server: {
-        apiUrl: "https://agent.nuwax.com",
+        apiUrl: "https://www.santisaas.com",
         timeout: DEFAULT_TIMEOUT,
       },
       local: {

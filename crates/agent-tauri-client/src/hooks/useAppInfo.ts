@@ -7,7 +7,7 @@ interface AppInfo {
 }
 
 export function useAppInfo(): AppInfo {
-  const [appName, setAppName] = useState("Nuwax Agent");
+  const [appName, setAppName] = useState("SantiClaw");
   const [appVersion, setAppVersion] = useState("");
 
   useEffect(() => {

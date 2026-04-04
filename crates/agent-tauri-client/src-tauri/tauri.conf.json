@@ -1,9 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Nuwax Agent",
+  "productName": "SantiClaw",
   "mainBinaryName": "agent-tauri-client",
   "version": "../package.json",
-  "identifier": "com.nuwax.agent-tauri-client",
+  "identifier": "com.santisaas.santiclaw-tauri-client",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
   "app": {
     "windows": [
       {
-        "title": "Nuwax Agent",
+        "title": "三体大龙虾",
         "width": 960,
         "height": 640
       }
@@ -49,12 +49,12 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDIyMTczQzJDQzE1MkYwMzgKUldRNDhGTEJMRHdYSWdiTXlROWtiVTBhcGhCQUlhczRqMTZCMTN0YUhtNTg0eFBFbW5qUnZmSVMK",
       "endpoints": [
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwax-agent-client/latest/latest.json",
-        "https://github.com/nuwax-ai/nuwax-agent-client/releases/latest/download/latest.json"
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-tauri-client/latest/latest.json",
+        "https://github.com/XiaoZouYu/nuwaclaw/releases/latest/download/latest.json"
       ]
     },
     "cli": {
-      "description": "Nuwax Agent Desktop Client - 智能 Agent 桌面客户端",
+      "description": "SantiClaw Desktop Client - 智能 Agent 桌面客户端",
       "args": [
         {
           "name": "tab",

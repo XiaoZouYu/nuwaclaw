@@ -332,7 +332,7 @@ export default function LoginForm({
         >
           <Input
             prefix={<GlobalOutlined />}
-            placeholder="服务域名（例如：https://agent.nuwax.com）"
+            placeholder="服务域名（例如：https://www.santisaas.com）"
             allowClear
           />
         </Form.Item>

@@ -26,7 +26,7 @@ export const DEFAULT_MCP_PROXY_PORT = 18099;
 export const DEFAULT_LOCAL_HOST = "127.0.0.1";
 
 /** 默认 API 服务器地址 */
-export const DEFAULT_SERVER_HOST = "https://agent.nuwax.com";
+export const DEFAULT_SERVER_HOST = "https://www.santisaas.com";
 
 /** 默认 HTTPS 端口 */
 export const DEFAULT_SERVER_PORT = 443;

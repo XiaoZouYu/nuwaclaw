@@ -184,7 +184,7 @@ export interface ShellInstallerResult {
 
 /**
  * 获取应用数据目录路径
- * @returns 应用数据目录（如 ~/Library/Application Support/com.nuwax.agent）
+ * @returns 应用数据目录（如 ~/Library/Application Support/com.santisaas.santiclaw-tauri-client）
  */
 export async function getAppDataDir(): Promise<string> {
   try {

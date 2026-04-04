@@ -237,7 +237,7 @@ export default function SetupStep2({ onComplete, onBack }: SetupStep2Props) {
             >
               <Input
                 prefix={<GlobalOutlined />}
-                placeholder="例如：https://agent.nuwax.com"
+                placeholder="例如：https://www.santisaas.com"
               />
             </Form.Item>
 
