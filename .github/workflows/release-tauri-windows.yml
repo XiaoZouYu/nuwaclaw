@@ -251,8 +251,8 @@ jobs:
           OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
         run: |
           TAG="${GITHUB_REF_NAME}"
-          OSS_ENDPOINT="https://oss-rg-china-mainland.aliyuncs.com"
-          OSS_REGION="rg-china-mainland"
+          OSS_ENDPOINT="https://oss-cn-chengdu.aliyuncs.com"
+          OSS_REGION="cn-chengdu"
           OSS_BUCKET="oss://santisaas"
           OSS_PREFIX="santiclaw-tauri-client/${TAG}"
 
