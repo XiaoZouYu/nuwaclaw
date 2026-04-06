@@ -3278,10 +3278,10 @@ async fn dependency_local_env_init(app: tauri::AppHandle) -> Result<bool, String
     // 创建 package.json（若不存在）
     if !package_json_path.exists() {
         let content = r#"{
-  "name": "santiclaw-tauri-deps",
+  "name": "nuwax-agent-deps",
   "version": "1.0.0",
   "private": true,
-  "description": "SantiClaw 本地依赖"
+  "description": "Nuwax Agent 本地依赖"
 }"#;
         std::fs::write(&package_json_path, content)
             .map_err(|e| format!("创建 package.json 失败: {}", e))?;
@@ -3965,7 +3965,7 @@ async fn autolaunch_diagnose(app: tauri::AppHandle) -> Result<AutolaunchDiagnose
     let (backend, config_path) = {
         let home = std::env::var("HOME").unwrap_or_default();
         let plist = std::path::PathBuf::from(&home)
-            .join("Library/LaunchAgents/com.santisaas.santiclaw-tauri-client.plist");
+            .join("Library/LaunchAgents/com.nuwax.agent-tauri-client.plist");
         (
             "LaunchAgent".to_string(),
             plist.to_string_lossy().to_string(),
@@ -3987,7 +3987,7 @@ async fn autolaunch_diagnose(app: tauri::AppHandle) -> Result<AutolaunchDiagnose
             .unwrap_or_else(|_| {
                 std::path::PathBuf::from(std::env::var("HOME").unwrap_or_default()).join(".config")
             });
-        let path = config_dir.join("autostart/santiclaw.desktop");
+        let path = config_dir.join("autostart/nuwax-agent.desktop");
         (
             "XDG Autostart".to_string(),
             path.to_string_lossy().to_string(),
@@ -4607,10 +4607,10 @@ pub fn run() {
     });
 
     // 在其他代码之前初始化日志系统，使日志写入文件
-    // 日志目录：macOS ~/Library/Application Support/santiclaw/logs/
-    //          Linux ~/.local/share/santiclaw/logs/
-    //          Windows %APPDATA%\santiclaw\logs\
-    if let Err(e) = nuwax_agent_core::Logger::init("santiclaw") {
+    // 日志目录：macOS ~/Library/Application Support/nuwax-agent/logs/
+    //          Linux ~/.local/share/nuwax-agent/logs/
+    //          Windows %APPDATA%\nuwax-agent\logs\
+    if let Err(e) = nuwax_agent_core::Logger::init("nuwax-agent") {
         eprintln!("[Logger] Failed to initialize logger: {}", e);
     }
 
@@ -4649,8 +4649,8 @@ pub fn run() {
             // CLI 参数解析与导航事件处理
             // ============================================
             // 支持 --tab/-t 参数指定启动后跳转的 Tab
-            // 示例: santiclaw --tab permissions
-            //       santiclaw -t logs
+            // 示例: nuwax-agent --tab permissions
+            //       nuwax-agent -t logs
             info!("[Setup] 开始解析 CLI 参数...");
 
             // 使用 tauri_plugin_cli 获取参数

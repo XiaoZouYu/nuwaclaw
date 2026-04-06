@@ -1,10 +1,10 @@
-# SantiClaw Tauri 客户端
+# Nuwax Agent Tauri 客户端
 
 基于 Tauri 2.0 + React 18 + Ant Design 5 的跨平台桌面客户端应用。
 
 ## 快速开始
 
-以下涉及 `make` 的命令均在当前仓库根目录执行（即包含 `crates/agent-tauri-client` 的上级目录）。
+以下涉及 `make` 的命令均在 **nuwax-agent 仓库根目录** 执行（即包含 `crates/agent-tauri-client` 的上级目录）。
 
 ### 1. 安装必需工具
 
@@ -54,7 +54,7 @@ unset CI && make tauri-bundle
 
 ## Makefile 命令
 
-在当前仓库根目录执行：
+在 **nuwax-agent 仓库根目录** 执行：
 
 | 命令 | 说明 |
 |------|------|
@@ -70,17 +70,27 @@ unset CI && make tauri-bundle
 
 客户端通过 Tauri 插件检查更新，配置在 `src-tauri/tauri.conf.json` 的 `plugins.updater.endpoints`，当前指向：
 
-- **当前使用**：`https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-tauri-client/latest/latest.json`
+- **当前使用**：`https://nuwax.com/releases/latest/download/latest.json`
 
-该文件由 GitHub Release 发布后同步到阿里云 OSS。
+该文件并非由 nuwax.com 自动生成，而是**从 GitHub 手动同步**的。
 
 ### 原始数据源
 
-- **来源地址**：<https://github.com/XiaoZouYu/nuwaclaw/releases/latest/download/latest.json>
-- 每次在 GitHub 发布新版本后，workflow 会把 `latest.json` 同步到对外 OSS 地址，客户端才能检测到新版本。
+- **来源地址**：<https://github.com/nuwax-ai/nuwax-agent-client/releases/latest/download/latest.json>
+- 每次在 GitHub 发布新版本后，需把上述 `latest.json` 同步到对外域名，客户端才能检测到新版本。
 
 ### 如何同步
 
-同步由 GitHub Actions 的 Tauri release workflow 自动完成，产物会上传到 OSS 并更新：
+同步通过 **docs 项目** 的 Makefile 完成（例如项目路径：`git_work/docs`）：
 
-`https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-tauri-client/latest/latest.json`
+```bash
+cd /path/to/docs   # 如 ~/git_work/docs
+make update-release
+```
+
+该命令会：
+
+1. 从 GitHub 下载 `latest.json` 到 `public/releases/latest/download/latest.json`
+2. 部署 docs 后，即可通过 `https://nuwax.com/releases/latest/download/latest.json` 访问
+
+因此发布新版本后，在 docs 项目里执行一次 `make update-release` 并完成部署，用户端才能收到更新提示。
