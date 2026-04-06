@@ -253,8 +253,8 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           OSS_ENDPOINT="https://oss-rg-china-mainland.aliyuncs.com"
           OSS_REGION="rg-china-mainland"
-          OSS_BUCKET="oss://nuwa-packages"
-          OSS_PREFIX="nuwax-agent-client/${TAG}"
+          OSS_BUCKET="oss://santisaas"
+          OSS_PREFIX="santiclaw-tauri-client/${TAG}"
 
           for file in /tmp/release-assets/*; do
             filename=$(basename "$file")
@@ -277,9 +277,9 @@ jobs:
           OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
         run: |
           TAG="${GITHUB_REF_NAME}"
-          OSS_ENDPOINT="https://oss-rg-china-mainland.aliyuncs.com"
-          OSS_REGION="rg-china-mainland"
-          OSS_BUCKET="oss://nuwa-packages"
+          OSS_ENDPOINT="https://oss-cn-chengdu.aliyuncs.com"
+          OSS_REGION="cn-chengdu"
+          OSS_BUCKET="oss://santisaas"
           LATEST_JSON="/tmp/release-assets/latest.json"
 
           if [ ! -f "$LATEST_JSON" ]; then
@@ -292,21 +292,21 @@ jobs:
 
           # Replace GitHub Release download URLs with OSS URLs
           GITHUB_PREFIX="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/"
-          OSS_URL_PREFIX="https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwax-agent-client/${TAG}/"
+          OSS_URL_PREFIX="https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-tauri-client/${TAG}/"
           sed -i "s|${GITHUB_PREFIX}|${OSS_URL_PREFIX}|g" "$LATEST_JSON"
 
           echo "==> Rewritten latest.json:"
           cat "$LATEST_JSON"
 
           # Upload to versioned path
-          ossutil cp --force "$LATEST_JSON" "${OSS_BUCKET}/nuwax-agent-client/${TAG}/latest.json" \
+          ossutil cp --force "$LATEST_JSON" "${OSS_BUCKET}/santiclaw-tauri-client/${TAG}/latest.json" \
             --endpoint "$OSS_ENDPOINT" \
             --region "$OSS_REGION" \
             --access-key-id "$OSS_ACCESS_KEY_ID" \
             --access-key-secret "$OSS_ACCESS_KEY_SECRET"
 
           # Upload to stable path for updater endpoint
-          ossutil cp --force "$LATEST_JSON" "${OSS_BUCKET}/nuwax-agent-client/latest/latest.json" \
+          ossutil cp --force "$LATEST_JSON" "${OSS_BUCKET}/santiclaw-tauri-client/latest/latest.json" \
             --endpoint "$OSS_ENDPOINT" \
             --region "$OSS_REGION" \
             --access-key-id "$OSS_ACCESS_KEY_ID" \
@@ -314,7 +314,7 @@ jobs:
 
       - name: Verify OSS upload
         run: |
-          VERIFY_URL="https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwax-agent-client/latest/latest.json"
+          VERIFY_URL="https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-tauri-client/latest/latest.json"
           HTTP_STATUS=$(curl -sS -o /tmp/oss-latest.json -w "%{http_code}" "$VERIFY_URL")
           if [ "$HTTP_STATUS" = "200" ]; then
             echo "==> Verification passed (HTTP ${HTTP_STATUS})"

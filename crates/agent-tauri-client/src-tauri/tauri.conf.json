@@ -49,8 +49,8 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZCODcxNTA1OUI3RkY2NDEKUldSQjluK2JCUldIKzE5Qjh0clVjOU1nWFB0Y3plUXBYcyt3Nlc3UXBJUndPTVVyblI1UXBNRGYK",
       "endpoints": [
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwax-agent-client/latest/latest.json",
-        "https://github.com/nuwax-ai/nuwax-agent-client/releases/latest/download/latest.json"
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-tauri-client/latest/latest.json",
+        "https://github.com/XiaoZouYu/nuwaclaw/releases/latest/download/latest.json"
       ]
     },
     "cli": {
