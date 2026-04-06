@@ -457,7 +457,7 @@ jobs:
 
           # 上传重建的 .app.tar.gz
           # 注意：post-sign 和 Tauri 生成的文件名格式一致，都包含架构后缀
-          # （如 Nuwax.Agent_aarch64.app.tar.gz）
+          # （如 SantiClaw_aarch64.app.tar.gz）
           for targz in "${BUNDLE_BASE}/macos"/*.app.tar.gz; do
             if [ -f "$targz" ]; then
               echo "Uploading $(basename "$targz") ..."
@@ -481,14 +481,14 @@ jobs:
               echo "Deleting old tar.gz files for current architecture from release..."
               ARCH_FILES=""
               if [[ "$TARGET" == *"aarch64"* ]]; then
-                ARCH_FILES="Nuwax.Agent_aarch64.app.tar.gz Nuwax.Agent_aarch64.app.tar.gz.sig"
+                ARCH_FILES="SantiClaw_aarch64.app.tar.gz SantiClaw_aarch64.app.tar.gz.sig"
               elif [[ "$TARGET" == *"x86_64"* ]]; then
-                ARCH_FILES="Nuwax.Agent_x64.app.tar.gz Nuwax.Agent_x64.app.tar.gz.sig"
+                ARCH_FILES="SantiClaw_x64.app.tar.gz SantiClaw_x64.app.tar.gz.sig"
               elif [[ "$TARGET" == *"universal"* ]]; then
-                ARCH_FILES="Nuwax.Agent_universal.app.tar.gz Nuwax.Agent_universal.app.tar.gz.sig"
+                ARCH_FILES="SantiClaw_universal.app.tar.gz SantiClaw_universal.app.tar.gz.sig"
               else
                 # 无 target 时，使用默认文件名
-                ARCH_FILES="Nuwax.Agent.app.tar.gz Nuwax.Agent.app.tar.gz.sig"
+                ARCH_FILES="SantiClaw.app.tar.gz SantiClaw.app.tar.gz.sig"
               fi
               for f in $ARCH_FILES; do
                 echo "Deleting $f..."
@@ -545,9 +545,9 @@ jobs:
 
           # 签名文件映射：sig 文件名 -> 对应的 latest.json platform keys
           declare -A SIG_MAP=(
-            ["Nuwax.Agent_aarch64.app.tar.gz.sig"]="darwin-aarch64 darwin-aarch64-app"
-            ["Nuwax.Agent_x64.app.tar.gz.sig"]="darwin-x86_64 darwin-x86_64-app"
-            ["Nuwax.Agent_universal.app.tar.gz.sig"]="darwin-universal darwin-universal-app"
+            ["SantiClaw_aarch64.app.tar.gz.sig"]="darwin-aarch64 darwin-aarch64-app"
+            ["SantiClaw_x64.app.tar.gz.sig"]="darwin-x86_64 darwin-x86_64-app"
+            ["SantiClaw_universal.app.tar.gz.sig"]="darwin-universal darwin-universal-app"
           )
 
           for sig_file in *.app.tar.gz.sig; do
