@@ -942,6 +942,17 @@ async fn run_npm_command_with_timeout(
 
     cmd.no_window();
     cmd.env("PATH", node_path);
+    #[cfg(target_os = "windows")]
+    {
+        // Windows 下某些 npm lifecycle 脚本会通过 `cmd /c node ...` 再次启动子进程。
+        // 显式补齐这些变量，避免子进程拿不到应用内 node.exe。
+        cmd.env("Path", node_path);
+        cmd.env("NODE", &node_bin);
+        cmd.env("npm_node_execpath", &node_bin);
+        if npm_cli.exists() {
+            cmd.env("npm_execpath", npm_cli.to_string_lossy().to_string());
+        }
+    }
     cmd.env("NPM_CONFIG_CACHE", npm_cache_dir.to_string_lossy().to_string());
     cmd.env("NPM_CONFIG_LOGS_DIR", npm_logs_dir.to_string_lossy().to_string());
     cmd.env("SCARF_ANALYTICS", "false");
@@ -3688,6 +3699,7 @@ async fn dependency_local_install(
             app_dir.clone(),
             "--registry".to_string(),
             registry.clone(),
+            "--ignore-scripts".to_string(),
         ],
         120,
         "npm install(local tarball)",
@@ -3719,6 +3731,7 @@ async fn dependency_local_install(
                 app_dir.clone(),
                 "--registry".to_string(),
                 registry.clone(),
+                "--ignore-scripts".to_string(),
             ],
             120,
             "npm install(remote fallback)",
