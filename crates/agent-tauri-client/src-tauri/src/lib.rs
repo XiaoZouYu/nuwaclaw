@@ -930,7 +930,7 @@ async fn run_npm_command_with_timeout(
             // Force jitless mode for npm-related short-lived commands.
             c.arg("--jitless");
         }
-        c.arg(npm_cli);
+        c.arg(&npm_cli);
         c
     } else {
         warn!(
