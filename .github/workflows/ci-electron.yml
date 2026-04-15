@@ -111,8 +111,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: npm
-          cache-dependency-path: crates/agent-electron-client/package-lock.json
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
 
       # Python 3.12+ 移除了 distutils，node-gyp（better-sqlite3 等 native 模块）依赖它
       - name: Install setuptools for node-gyp (Python 3.12+)
@@ -128,9 +129,8 @@ jobs:
           sudo gem install fpm
           echo "USE_SYSTEM_FPM=true" >> "$GITHUB_ENV"
 
-      - name: Install dependencies
-        working-directory: crates/agent-electron-client
-        run: npm install
+      - name: Install workspace dependencies
+        run: pnpm install --filter @nuwax-ai/santiclaw...
 
       # 为 Electron 内嵌 Node 重编 better-sqlite3，避免 Linux arm64 等平台运行时 "cannot open shared object file"
       - name: Rebuild native modules for Electron
