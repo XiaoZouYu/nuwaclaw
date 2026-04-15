@@ -211,7 +211,6 @@ jobs:
         working-directory: crates/agent-electron-client
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          CSC_NAME: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
           if [ "${{ runner.os }}" = "macOS" ] && [ -z "${{ secrets.APPLE_CERTIFICATE }}" ]; then
             echo "No Apple certificate, building unsigned Mac package for ${{ matrix.arch }}"
