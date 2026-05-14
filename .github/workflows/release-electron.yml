@@ -274,6 +274,12 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           CSC_NAME: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
+          if [ "${{ runner.os }}" = "macOS" ] && [ -n "${APPLE_SIGNING_IDENTITY:-}" ]; then
+            NORMALIZED_IDENTITY="${APPLE_SIGNING_IDENTITY#Developer ID Application: }"
+            echo "APPLE_SIGNING_IDENTITY=${NORMALIZED_IDENTITY}" >> "$GITHUB_ENV"
+            export APPLE_SIGNING_IDENTITY="$NORMALIZED_IDENTITY"
+            export CSC_NAME="$NORMALIZED_IDENTITY"
+          fi
           if [ "${{ runner.os }}" = "macOS" ] && [ -z "${{ secrets.APPLE_CERTIFICATE }}" ]; then
             echo "No Apple certificate, building unsigned Mac package for ${{ matrix.arch }}"
             npm run dist:mac:unsigned:${{ matrix.arch }} -- --publish never

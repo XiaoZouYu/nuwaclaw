@@ -244,6 +244,12 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           CSC_NAME: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
+          if [ "${{ runner.os }}" = "macOS" ] && [ -n "${APPLE_SIGNING_IDENTITY:-}" ]; then
+            NORMALIZED_IDENTITY="${APPLE_SIGNING_IDENTITY#Developer ID Application: }"
+            echo "APPLE_SIGNING_IDENTITY=${NORMALIZED_IDENTITY}" >> "$GITHUB_ENV"
+            export APPLE_SIGNING_IDENTITY="$NORMALIZED_IDENTITY"
+            export CSC_NAME="$NORMALIZED_IDENTITY"
+          fi
           echo "Building Electron app for ${{ runner.os }} (${{ matrix.arch }})"
           npm run ${{ matrix.dist_cmd }} -- --publish never
 
