@@ -32,10 +32,10 @@ import {
 // ==================== OSS latest.json ====================
 
 const OSS_BASE =
-  "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron";
+  "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron";
 const OSS_STABLE_LATEST_JSON_URL = `${OSS_BASE}/latest/latest.json`;
 const OSS_BETA_LATEST_JSON_URL = `${OSS_BASE}/beta/latest.json`;
-const OFFICIAL_DOWNLOAD_PAGE_URL = "https://nuwax.com/nuwaclaw.html";
+const OFFICIAL_DOWNLOAD_PAGE_URL = "https://www.santisaas.com/";
 type UpdateChannel = "stable" | "beta";
 const UPDATE_CHANNEL_SETTING_KEY = "update_channel";
 

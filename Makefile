@@ -111,7 +111,7 @@ sidecar-clean:
 electron-install-deps:
 	@echo ">>> Installing Electron client dependencies (via pnpm workspace)..."
 	@echo ">>> nuwax-mcp-stdio-proxy will be auto-built via prepare script"
-	pnpm install --filter @nuwax-ai/nuwaclaw...
+	pnpm install --filter @nuwax-ai/santiclaw...
 
 .PHONY: electron-rebuild
 electron-rebuild:
@@ -221,12 +221,12 @@ electron-bundle: electron-bundle-unsigned
 	echo ">>> Release dir: $$RELEASE_DIR"; \
 	echo ">>> Sign work dir: $$WORK_DIR"; \
 	mkdir -p "$$UNSIGNED_DIR" "$$SIGNED_DIR"; \
-	cp "$$RELEASE_DIR/NuwaClaw-Setup-$$VERSION-unsigned.exe" "$$UNSIGNED_DIR/"; \
-	cp "$$RELEASE_DIR/NuwaClaw-$$VERSION-unsigned.msi" "$$UNSIGNED_DIR/"; \
+	cp "$$RELEASE_DIR/SantiClaw-Setup-$$VERSION-unsigned.exe" "$$UNSIGNED_DIR/"; \
+	cp "$$RELEASE_DIR/SantiClaw-$$VERSION-unsigned.msi" "$$UNSIGNED_DIR/"; \
 	( cd crates/$(ELECTRON_CLIENT) && SIGN_WORK_DIR="$$WORK_DIR" bash ./scripts/build/sign-release-win.sh "$$VERSION" --skip-download --skip-upload ); \
 	mkdir -p "$$RELEASE_DIR"; \
-	cp "$$SIGNED_DIR/NuwaClaw.Setup.$$VERSION.exe" "$$RELEASE_DIR/"; \
-	cp "$$SIGNED_DIR/NuwaClaw.$$VERSION.msi" "$$RELEASE_DIR/"; \
+	cp "$$SIGNED_DIR/SantiClaw.Setup.$$VERSION.exe" "$$RELEASE_DIR/"; \
+	cp "$$SIGNED_DIR/SantiClaw.$$VERSION.msi" "$$RELEASE_DIR/"; \
 	echo ">>> Signed artifacts copied to $$RELEASE_DIR"
 else
 .PHONY: electron-bundle

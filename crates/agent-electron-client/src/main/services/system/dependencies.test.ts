@@ -124,7 +124,7 @@ describe("dependencies", () => {
       const pathSep = process.platform === "win32" ? ";" : ":";
       const pathEntries = env.PATH?.split(pathSep) || [];
       const home = path.join("/mock", "home");
-      const appData = path.join(home, ".nuwaclaw");
+      const appData = path.join(home, ".santiclaw");
       expect(pathEntries).toContain(path.join(appData, "node_modules", ".bin"));
       expect(pathEntries).toContain(path.join(appData, "bin"));
     });
@@ -133,7 +133,7 @@ describe("dependencies", () => {
       const { getAppEnv } = await import("../system/dependencies");
       const env = getAppEnv();
 
-      const expected = path.join("/mock", "home", ".nuwaclaw", "node_modules");
+      const expected = path.join("/mock", "home", ".santiclaw", "node_modules");
       expect(env.NODE_PATH).toBe(expected);
     });
 
@@ -148,7 +148,7 @@ describe("dependencies", () => {
       const { getAppEnv } = await import("../system/dependencies");
       const env = getAppEnv();
 
-      const expected = path.join("/mock", "home", ".nuwaclaw", ".npmrc");
+      const expected = path.join("/mock", "home", ".santiclaw", ".npmrc");
       expect(env.NPM_CONFIG_USERCONFIG).toBe(expected);
     });
 
@@ -204,14 +204,14 @@ describe("dependencies", () => {
       expect(uvDep?.minVersion).toBe("0.5.0");
     });
 
-    it("should have nuwax-file-server as npm-local dependency", async () => {
+    it("should have nuwax-file-server as bundled dependency", async () => {
       const { getSetupRequiredDependencies } =
         await import("../system/dependencies");
       const deps = getSetupRequiredDependencies();
       const fileServerDep = deps.find((d) => d.name === "nuwax-file-server");
 
       expect(fileServerDep).toBeDefined();
-      expect(fileServerDep?.type).toBe("npm-local");
+      expect(fileServerDep?.type).toBe("bundled");
       expect(fileServerDep?.required).toBe(true);
       expect(fileServerDep?.binName).toBe("nuwax-file-server");
     });
@@ -260,7 +260,7 @@ describe("dependencies", () => {
       // Should not contain project node_modules
       expect(
         pathEntries.find(
-          (p) => p.includes("node_modules/.bin") && !p.includes(".nuwaclaw"),
+          (p) => p.includes("node_modules/.bin") && !p.includes(".santiclaw"),
         ),
       ).toBeUndefined();
       // Should contain system paths

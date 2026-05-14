@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button, Alert } from "antd";
 import { ArrowLeftOutlined, ReloadOutlined } from "@ant-design/icons";
-import { APP_DISPLAY_NAME } from "@shared/constants";
+import { APP_ENGLISH_NAME } from "@shared/constants";
 import { t } from "../../services/core/i18n";
 import styles from "../styles/components/EmbeddedWebview.module.css";
 
@@ -28,7 +28,7 @@ function EmbeddedWebview({ url, onClose }: EmbeddedWebviewProps) {
     window.electronAPI?.app
       .getVersion()
       .then((version) => {
-        setUserAgent(navigator.userAgent + ` ${APP_DISPLAY_NAME}/${version}`);
+        setUserAgent(navigator.userAgent + ` ${APP_ENGLISH_NAME}/${version}`);
       })
       .catch(() => {});
   }, []);

@@ -2,7 +2,7 @@ import type { ThemeConfig, MappingAlgorithm } from "antd";
 import { theme } from "antd";
 
 /**
- * NuwaClaw 主题配置
+ * SantiClaw 主题配置
  * shadcn/ui 风格，支持亮色/暗色主题
  */
 

@@ -194,7 +194,7 @@ export class SandboxInvoker {
     const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const profilePath = path.join(
       fs.realpathSync(os.tmpdir()),
-      `nuwaclaw-sandbox-${uniqueSuffix}.sb`,
+      `santiclaw-sandbox-${uniqueSuffix}.sb`,
     );
     const profile = this.buildSeatbeltProfile(
       params.command,

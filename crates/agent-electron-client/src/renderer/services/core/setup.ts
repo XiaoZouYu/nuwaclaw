@@ -1,5 +1,5 @@
 /**
- * Setup & Auth Service for NuwaClaw
+ * Setup & Auth Service for SantiClaw
  *
  * Manages:
  * - Setup Wizard (first launch)

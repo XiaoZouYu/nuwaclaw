@@ -8,7 +8,7 @@
  *   node verify-sign-win.js <file|directory> [...]
  *
  * 示例:
- *   node verify-sign-win.js release/1.0.0/windows-x64/NuwaClaw Setup 1.0.0.exe
+ *   node verify-sign-win.js release/1.0.0/windows-x64/SantiClaw Setup 1.0.0.exe
  *   node verify-sign-win.js release/1.0.0/windows-x64/
  *
  * @module verify-sign-win
@@ -180,7 +180,7 @@ function main() {
     console.log('');
     console.log('示例:');
     console.log('  node verify-sign-win.js release/1.0.0/windows-x64/');
-    console.log('  node verify-sign-win.js "NuwaClaw Setup 1.0.0.exe"');
+    console.log('  node verify-sign-win.js "SantiClaw Setup 1.0.0.exe"');
     process.exit(1);
   }
 

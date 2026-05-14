@@ -12,7 +12,7 @@
 #   ./sign-release-win.sh 0.9.2
 #   ./sign-release-win.sh 0.9.2 --skip-download
 #   ./sign-release-win.sh 0.9.2 --skip-upload
-#   ./sign-release-win.sh 0.9.2 --upload-only   # 仅上传（$SIGNED_DIR 下已有 NuwaClaw.Setup.x.exe / NuwaClaw.x.msi）
+#   ./sign-release-win.sh 0.9.2 --upload-only   # 仅上传（$SIGNED_DIR 下已有 SantiClaw.Setup.x.exe / SantiClaw.x.msi）
 #
 # Required Environment Variables:
 #   WINDOWS_CERTIFICATE_SHA1  - Certificate thumbprint
@@ -84,7 +84,7 @@ if [[ -z "$VERSION" ]]; then
     echo "  $0 0.9.2 --skip-download      # Use existing unsigned files"
     echo "  $0 0.9.2 --skip-upload        # Keep signed files locally only"
     echo "  $0 0.9.2 --skip-cache-check   # Force re-download even if cache exists"
-    echo "  $0 0.9.2 --upload-only        # 仅上传（需 NuwaClaw.Setup.0.9.2.exe 与 NuwaClaw.0.9.2.msi 已在 signed 目录）"
+    echo "  $0 0.9.2 --upload-only        # 仅上传（需 SantiClaw.Setup.0.9.2.exe 与 SantiClaw.0.9.2.msi 已在 signed 目录）"
     exit 1
 fi
 
@@ -356,12 +356,12 @@ check_cache_valid() {
 }
 
 # File names
-# CI builds: NuwaClaw-Setup-{version}-unsigned.exe, NuwaClaw-{version}-unsigned.msi
-# Signed:    NuwaClaw.Setup.{version}.exe,         NuwaClaw.{version}.msi
-UNSIGNED_EXE="NuwaClaw-Setup-$VERSION-unsigned.exe"
-UNSIGNED_MSI="NuwaClaw-$VERSION-unsigned.msi"
-SIGNED_EXE="NuwaClaw.Setup.$VERSION.exe"
-SIGNED_MSI="NuwaClaw.$VERSION.msi"
+# CI builds: SantiClaw-Setup-{version}-unsigned.exe, SantiClaw-{version}-unsigned.msi
+# Signed:    SantiClaw.Setup.{version}.exe,         SantiClaw.{version}.msi
+UNSIGNED_EXE="SantiClaw-Setup-$VERSION-unsigned.exe"
+UNSIGNED_MSI="SantiClaw-$VERSION-unsigned.msi"
+SIGNED_EXE="SantiClaw.Setup.$VERSION.exe"
+SIGNED_MSI="SantiClaw.$VERSION.msi"
 
 echo ""
 echo "==> Setting up directories"

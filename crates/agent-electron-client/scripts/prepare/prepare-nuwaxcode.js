@@ -247,7 +247,7 @@ function download(url, preferredFilename, options = {}) {
       try { fs.unlinkSync(file); } catch (_) {}
     }
 
-    const headers = { 'User-Agent': 'NuwaClaw-Build' };
+    const headers = { 'User-Agent': 'SantiClaw-Build' };
     if (process.env.GITHUB_TOKEN) {
       headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
     }

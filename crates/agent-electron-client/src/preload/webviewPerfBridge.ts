@@ -89,6 +89,6 @@ const perf = {
   },
 };
 
-contextBridge.exposeInMainWorld("NuwaClawBridge", {
+contextBridge.exposeInMainWorld("SantiClawBridge", {
   perf,
 });

@@ -9,11 +9,14 @@ import type { AgentEngineType } from "@shared/types/electron";
 
 // ==================== 应用名称 ====================
 
-/** 应用对外显示名称（窗口标题、关于、安装包名称等），与 package.json build.productName 保持一致 */
-export const APP_DISPLAY_NAME = "NuwaClaw";
+/** 应用对外中文显示名称（窗口标题、关于、托盘等） */
+export const APP_DISPLAY_NAME = "三体大龙虾";
+
+/** 应用英文品牌名称（安装包名、User-Agent、外部集成标识等） */
+export const APP_ENGLISH_NAME = "SantiClaw";
 
 /** 应用技术标识（进程名、目录名等，小写字母），与 appId 等保持一致 */
-export const APP_NAME_IDENTIFIER = "nuwaclaw";
+export const APP_NAME_IDENTIFIER = "santiclaw";
 
 /** 主窗口默认宽度（首次创建窗口时使用） */
 export const DEFAULT_WINDOW_WIDTH = 1240;
@@ -67,7 +70,7 @@ export const LOCAL_HOST_URL = "http://127.0.0.1";
 export const DEFAULT_ANTHROPIC_API_URL = "https://api.anthropic.com";
 
 /** 默认后端服务器地址 */
-export const DEFAULT_SERVER_HOST = "https://agent.nuwax.com";
+export const DEFAULT_SERVER_HOST = "https://www.santisaas.com/";
 
 // ==================== AI 默认配置 ====================
 

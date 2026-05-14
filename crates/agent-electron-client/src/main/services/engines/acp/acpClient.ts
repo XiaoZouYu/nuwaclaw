@@ -9,7 +9,7 @@
  * - nuwaxcode:    spawn `nuwaxcode acp` (npm-local dependency)
  *
  * References Tauri client's rcoder_impl.rs pattern:
- * - Binaries installed as npm-local dependencies in ~/.nuwaclaw/node_modules/.bin/
+ * - Binaries installed as npm-local dependencies in ~/.santiclaw/node_modules/.bin/
  * - CLAUDE_CODE_ACP_PATH env var points to claude-code-acp-ts binary
  * - ACP protocol uses NDJSON (newline-delimited JSON) over stdin/stdout
  */
@@ -477,7 +477,7 @@ function getNuwaxcodePersistentLogDir(): string {
 /**
  * Resolve ACP binary path for a given engine type.
  *
- * - claude-code → ~/.nuwaclaw/node_modules/claude-code-acp-ts (JS entry, spawned via node)
+ * - claude-code → ~/.santiclaw/node_modules/claude-code-acp-ts (JS entry, spawned via node)
  * - nuwaxcode   → native Go binary (spawned directly, not via node)
  *
  * For nuwaxcode, we resolve the platform-specific native binary directly
@@ -782,13 +782,13 @@ export async function createAcpConnection(
 
       // Extra writable paths for seatbelt profile:
       // 1. isolatedHome — engine config/cache
-      // 2. App data directory (~/.nuwaclaw) — engine logs, npm packages, config
+      // 2. App data directory (~/.santiclaw) — engine logs, npm packages, config
       // 3. System temp directories — engines may create temp files here for tool
       //    execution. Cross-platform: os.tmpdir() + realpath, plus macOS-specific
       //    /tmp and /private/tmp (some engines hardcode these instead of os.tmpdir()).
       const extraWritable: string[] = [isolatedHome, os.tmpdir()];
 
-      // App data directory (e.g. ~/.nuwaclaw) — engine writes logs, npm packages, etc.
+      // App data directory (e.g. ~/.santiclaw) — engine writes logs, npm packages, etc.
       const appDataDir = path.join(app.getPath("home"), APP_DATA_DIR_NAME);
       extraWritable.push(appDataDir);
 

@@ -28,7 +28,7 @@ describe("strictPermissionGuard", () => {
     const result = evaluateStrictWritePermission(makeRequest(), {
       strictEnabled: false,
       workspaceDir: "/workspace",
-      appDataDir: "/home/me/.nuwaclaw",
+      appDataDir: "/home/me/.santiclaw",
       tempDirs: ["/tmp"],
     });
 
@@ -49,7 +49,7 @@ describe("strictPermissionGuard", () => {
       {
         strictEnabled: true,
         workspaceDir: "/workspace",
-        appDataDir: "/home/me/.nuwaclaw",
+        appDataDir: "/home/me/.santiclaw",
         tempDirs: ["/tmp"],
       },
     );
@@ -72,7 +72,7 @@ describe("strictPermissionGuard", () => {
       {
         strictEnabled: true,
         workspaceDir: "/workspace",
-        appDataDir: "/home/me/.nuwaclaw",
+        appDataDir: "/home/me/.santiclaw",
         tempDirs: ["/tmp"],
       },
     );
@@ -95,7 +95,7 @@ describe("strictPermissionGuard", () => {
       {
         strictEnabled: true,
         workspaceDir: "/workspace",
-        appDataDir: "/home/me/.nuwaclaw",
+        appDataDir: "/home/me/.santiclaw",
         tempDirs: ["/tmp"],
       },
     );
@@ -118,7 +118,7 @@ describe("strictPermissionGuard", () => {
         strictEnabled: true,
         workspaceDir: "/workspace",
         isolatedHome: "/sandbox/home",
-        appDataDir: "/home/me/.nuwaclaw",
+        appDataDir: "/home/me/.santiclaw",
         tempDirs: ["/tmp"],
       },
     );
@@ -141,7 +141,7 @@ describe("strictPermissionGuard", () => {
       {
         strictEnabled: true,
         workspaceDir: "C:\\Workspace",
-        appDataDir: "C:\\Users\\me\\.nuwaclaw",
+        appDataDir: "C:\\Users\\me\\.santiclaw",
         tempDirs: ["C:\\Temp"],
         platform: "win32",
       },
@@ -165,7 +165,7 @@ describe("strictPermissionGuard", () => {
       {
         strictEnabled: true,
         workspaceDir: "C:\\Workspace",
-        appDataDir: "C:\\Users\\me\\.nuwaclaw",
+        appDataDir: "C:\\Users\\me\\.santiclaw",
         tempDirs: ["C:\\Temp"],
         platform: "win32",
       },
@@ -188,7 +188,7 @@ describe("strictPermissionGuard", () => {
       {
         strictEnabled: true,
         workspaceDir: "/workspace",
-        appDataDir: "/home/me/.nuwaclaw",
+        appDataDir: "/home/me/.santiclaw",
         tempDirs: ["/tmp"],
       },
     );
@@ -210,7 +210,7 @@ describe("strictPermissionGuard", () => {
       {
         strictEnabled: true,
         workspaceDir: "/workspace",
-        appDataDir: "/home/me/.nuwaclaw",
+        appDataDir: "/home/me/.santiclaw",
         tempDirs: ["/tmp"],
       },
     );
@@ -232,7 +232,7 @@ describe("strictPermissionGuard", () => {
       {
         strictEnabled: true,
         workspaceDir: "/workspace",
-        appDataDir: "/home/me/.nuwaclaw",
+        appDataDir: "/home/me/.santiclaw",
         tempDirs: ["/tmp"],
       },
     );
@@ -255,7 +255,7 @@ describe("strictPermissionGuard", () => {
       {
         strictEnabled: true,
         workspaceDir: "/workspace",
-        appDataDir: "/home/me/.nuwaclaw",
+        appDataDir: "/home/me/.santiclaw",
         tempDirs: ["/tmp"],
       },
     );
@@ -278,7 +278,7 @@ describe("strictPermissionGuard", () => {
       {
         strictEnabled: true,
         workspaceDir: "/workspace",
-        appDataDir: "/home/me/.nuwaclaw",
+        appDataDir: "/home/me/.santiclaw",
         tempDirs: ["/tmp"],
       },
     );

@@ -276,7 +276,7 @@ export class UnifiedAgentService extends EventEmitter {
     this.baseConfig = config;
     this.engineType = config.engine;
 
-    // Initialize MemoryService with app data directory (~/.nuwaclaw/)
+    // Initialize MemoryService with app data directory (~/.santiclaw/)
     // Memory files should be stored in app data dir, not workspace dir
     try {
       const appDataDir = dependencies.getAppDataDir();

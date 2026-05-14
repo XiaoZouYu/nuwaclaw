@@ -8,9 +8,9 @@
 
 ## OSS 指针约定
 
-- `stable`：`nuwaclaw-electron/latest/latest.json`
-- `beta`：`nuwaclaw-electron/beta/latest.json`
-- 版本产物目录：`nuwaclaw-electron/electron-vX.Y.Z/`
+- `stable`：`santiclaw-electron/latest/latest.json`
+- `beta`：`santiclaw-electron/beta/latest.json`
+- 版本产物目录：`santiclaw-electron/electron-vX.Y.Z/`
 
 ## Workflow 触发参数
 

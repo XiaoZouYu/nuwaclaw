@@ -45,7 +45,7 @@ vi.mock("electron-log", () => ({
 }));
 vi.mock("./constants", () => ({
   LOCALHOST_HOSTNAME: "127.0.0.1",
-  APP_DATA_DIR_NAME: ".nuwaclaw",
+  APP_DATA_DIR_NAME: ".santiclaw",
   LOGS_DIR_NAME: "logs",
 }));
 vi.mock("./startupPorts", () => ({

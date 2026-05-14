@@ -216,7 +216,7 @@ describe("buildSandboxedSpawnArgs", () => {
         command: "/usr/bin/sandbox-exec",
         args: ["-f", "/tmp/profile.sb", "/bin/ls", "-la"],
         cwd: "/tmp",
-        seatbeltProfilePath: "/tmp/nuwaclaw-sandbox-123.sb",
+        seatbeltProfilePath: "/tmp/santiclaw-sandbox-123.sb",
       });
 
       const result = await buildSandboxedSpawnArgs(
@@ -246,7 +246,7 @@ describe("buildSandboxedSpawnArgs", () => {
         command: "/usr/bin/sandbox-exec",
         args: ["-f", "/tmp/profile.sb", "/bin/ls", "-la"],
         cwd: "/tmp",
-        seatbeltProfilePath: "/tmp/nuwaclaw-sandbox-123.sb",
+        seatbeltProfilePath: "/tmp/santiclaw-sandbox-123.sb",
       });
 
       await buildSandboxedSpawnArgs("/bin/ls", ["-la"], "/tmp", config);
@@ -266,7 +266,7 @@ describe("buildSandboxedSpawnArgs", () => {
         command: "/usr/bin/sandbox-exec",
         args: ["-f", "/tmp/profile.sb", "/bin/ls", "-la"],
         cwd: "/tmp",
-        seatbeltProfilePath: "/tmp/nuwaclaw-sandbox-123.sb",
+        seatbeltProfilePath: "/tmp/santiclaw-sandbox-123.sb",
       });
 
       const result = await buildSandboxedSpawnArgs(
@@ -283,7 +283,7 @@ describe("buildSandboxedSpawnArgs", () => {
       // Calling cleanup should delete the profile file
       result.cleanupSandbox();
       expect(mockUnlinkSync).toHaveBeenCalledWith(
-        "/tmp/nuwaclaw-sandbox-123.sb",
+        "/tmp/santiclaw-sandbox-123.sb",
       );
     });
 
@@ -297,7 +297,7 @@ describe("buildSandboxedSpawnArgs", () => {
         command: "/usr/bin/sandbox-exec",
         args: ["-f", "/tmp/profile.sb", "/bin/ls", "-la"],
         cwd: "/tmp",
-        seatbeltProfilePath: "/tmp/nuwaclaw-sandbox-123.sb",
+        seatbeltProfilePath: "/tmp/santiclaw-sandbox-123.sb",
       });
 
       mockUnlinkSync.mockImplementation(() => {
@@ -476,7 +476,7 @@ describe("buildSandboxedSpawnArgs", () => {
         command: "/usr/bin/sandbox-exec",
         args: ["-f", "/tmp/profile.sb", "/bin/ls", "-la"],
         cwd: "/tmp",
-        seatbeltProfilePath: "/tmp/nuwaclaw-sandbox-123.sb",
+        seatbeltProfilePath: "/tmp/santiclaw-sandbox-123.sb",
       });
 
       await buildSandboxedSpawnArgs("/bin/ls", ["-la"], "/tmp", config, [
@@ -501,7 +501,7 @@ describe("buildSandboxedSpawnArgs", () => {
         command: "/usr/bin/sandbox-exec",
         args: ["-f", "/tmp/profile.sb", "/bin/ls", "-la"],
         cwd: "/tmp",
-        seatbeltProfilePath: "/tmp/nuwaclaw-sandbox-123.sb",
+        seatbeltProfilePath: "/tmp/santiclaw-sandbox-123.sb",
       });
 
       await buildSandboxedSpawnArgs("/bin/ls", ["-la"], "/tmp", config, []);

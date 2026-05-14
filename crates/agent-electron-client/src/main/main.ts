@@ -198,7 +198,7 @@ function createWindow() {
     show: false,
   });
 
-  // 为 webview guest 注入轻量 Bridge（NuwaClawBridge）。
+  // 为 webview guest 注入轻量 Bridge（SantiClawBridge）。
   // 当前策略：对所有 http/https 页面注入；真正是否生效由 guest 侧路由+容器二次判断。
   mainWindow.webContents.on(
     "will-attach-webview",

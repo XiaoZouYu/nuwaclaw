@@ -1,7 +1,10 @@
 # Electron 桌面客户端 — 正式版本发布
 # 与 Tauri 客户端完全分开：使用独立 tag 与独立 GitHub Release，不共用 v* tag。
 #
-# 触发：推送 tag electron-v* → 构建并创建 Release。同步请用 workflow_dispatch 手动触发。
+# 触发：
+#   - 推送 tag electron-v* → 构建并创建 Release
+#   - 手动触发 action=release → 按指定 tag 构建并创建 Release
+#   - 手动触发 action=sync_oss → 仅将指定 tag 的 Release 资产同步到 Santisaas OSS
 #
 # 支持平台：
 #   - macOS arm64（macos-latest）
@@ -17,8 +20,7 @@
 #     - 公证：APPLE_API_KEY（.p8 Base64）/ APPLE_API_KEY_ID / APPLE_ISSUER_ID
 #   - Windows：本 workflow 仅构建产物，不在 CI 内签名；签名在本地 Windows（SimplySign）手动完成
 #     详见 crates/agent-electron-client/docs/windows-signing.md
-#   - MINIO_ACCESS_KEY_ID / MINIO_SECRET_ACCESS_KEY：上传到 MinIO S3
-#   - OSS_ACCESS_KEY_ID / OSS_ACCESS_KEY_SECRET：上传 latest.json 到阿里云 OSS
+#   - OSS_ACCESS_KEY_ID / OSS_ACCESS_KEY_SECRET：上传构建产物和 latest.json 到阿里云 OSS
 #
 # 产物目录：crates/agent-electron-client/release/${version}/（由 package.json directories.output 决定）
 
@@ -30,8 +32,16 @@ on:
       - "electron-v*"
   workflow_dispatch:
     inputs:
+      action:
+        description: "Choose release build or OSS sync"
+        required: true
+        default: "release"
+        type: choice
+        options:
+          - release
+          - sync_oss
       tag:
-        description: "Release tag to sync (e.g. electron-v0.9.0)"
+        description: "Release tag (e.g. electron-v1.0.1)"
         required: true
         type: string
       channel:
@@ -49,9 +59,10 @@ permissions:
 jobs:
   prepare:
     name: Prepare release
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.action == 'release')
     runs-on: ubuntu-latest
     outputs:
+      tag: ${{ steps.version.outputs.tag }}
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
@@ -59,34 +70,39 @@ jobs:
 
       - name: Get version from tag
         id: version
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          VERSION="${GITHUB_REF_NAME#electron-v}"
+          TAG="${RELEASE_TAG}"
+          VERSION="${TAG#electron-v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Electron release tag: $TAG"
           echo "Electron release version: $VERSION"
 
       - name: Read release notes
         id: notes
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          TAG="${{ github.ref_name }}"
+          TAG="${{ steps.version.outputs.tag }}"
           NOTES_FILE="release-notes/${TAG}.md"
           if [ -f "$NOTES_FILE" ]; then
             echo "Using release notes from $NOTES_FILE"
             cp "$NOTES_FILE" release_notes.txt
           else
-            echo "NuwaClaw ${VERSION}。请在 Assets 中下载对应平台安装包。" > release_notes.txt
+            echo "SantiClaw ${VERSION}。请在 Assets 中下载对应平台安装包。" > release_notes.txt
           fi
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${{ steps.version.outputs.tag }}"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" 2>/dev/null; then
             echo "Release $TAG already exists"
           else
             gh release create "$TAG" \
-              --title "NuwaClaw (Electron) ${{ steps.version.outputs.version }}" \
+              --title "SantiClaw (Electron) ${{ steps.version.outputs.version }}" \
               --notes-file release_notes.txt \
               --repo "$GITHUB_REPOSITORY"
             echo "Created release $TAG"
@@ -95,7 +111,7 @@ jobs:
   build-electron:
     name: Build Electron (${{ matrix.platform }} ${{ matrix.arch }})
     needs: prepare
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.action == 'release')
     strategy:
       fail-fast: false
       matrix:
@@ -156,7 +172,7 @@ jobs:
 
       # pnpm install 会建立 workspace 链接，nuwax-mcp-stdio-proxy 通过 prepare 脚本自动构建
       - name: Install workspace dependencies
-        run: pnpm install --filter @nuwax-ai/nuwaclaw...
+        run: pnpm install --filter @nuwax-ai/santiclaw...
 
       # 为 Electron 内嵌 Node 重编 better-sqlite3，避免 Linux arm64 等平台运行时 "cannot open shared object file"
       - name: Rebuild native modules for Electron
@@ -272,7 +288,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${{ needs.prepare.outputs.tag }}"
           VERSION="${{ needs.prepare.outputs.version }}"
           OUT_DIR="crates/agent-electron-client/release/${VERSION}"
           if [ ! -d "$OUT_DIR" ]; then
@@ -286,57 +302,28 @@ jobs:
             gh release upload "$TAG" "$f" --clobber --repo "$GITHUB_REPOSITORY"
           done
 
-  # ==================== 同步到 MinIO S3（构建产物）和阿里云 OSS（latest.json） ====================
-  # 手动触发：workflow_dispatch 输入 tag（如 electron-v0.8.0）
-  sync-to-minio:
-    name: Sync release to MinIO S3 & OSS
-    if: github.event_name == 'workflow_dispatch'
+  # ==================== 同步到阿里云 OSS（构建产物和 latest.json） ====================
+  # 手动触发：workflow_dispatch 选择 action=sync_oss 并输入 tag（如 electron-v1.0.1）
+  sync-to-oss:
+    name: Sync release assets to Santisaas OSS
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'sync_oss'
     runs-on: ubuntu-latest
-    continue-on-error: true
     env:
-      # MinIO S3 配置（存放构建产物和 yml 文件）
-      S3_ENDPOINT: "https://s3.nuwax.com:9443"
-      S3_REGION: "us-east-1"
-      S3_BUCKET: "nuwaclaw"
-      S3_CDN_BASE: "https://s3.nuwax.com:9443/nuwaclaw"
-      # 阿里云 OSS 配置（仅存放 latest.json）
-      OSS_ENDPOINT: "https://oss-rg-china-mainland.aliyuncs.com"
-      OSS_REGION: "rg-china-mainland"
-      OSS_BUCKET: "oss://nuwa-packages"
-      OSS_CDN_BASE: "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com"
+      # 阿里云 OSS 配置（存放构建产物和 latest.json）
+      OSS_ENDPOINT: "https://oss-cn-chengdu.aliyuncs.com"
+      OSS_REGION: "cn-chengdu"
+      OSS_BUCKET: "oss://santisaas"
+      OSS_CDN_BASE: "https://santisaas.oss-cn-chengdu.aliyuncs.com"
       RELEASE_TAG: ${{ inputs.tag }}
       RELEASE_CHANNEL: ${{ inputs.channel || 'stable' }}
     steps:
-      - name: Ensure awscli v2 (for S3)
-        run: |
-          if aws --version 2>/dev/null; then
-            echo "AWS CLI already installed"
-          else
-            curl -fSL -o /tmp/awscliv2.zip \
-              "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
-            unzip -q /tmp/awscliv2.zip -d /tmp
-            sudo /tmp/aws/install --bin-dir /usr/local/bin
-          fi
-          aws --version
-
-      - name: Install ossutil v2 (for latest.json)
+      - name: Install ossutil v2
         run: |
           curl -fSL -o /tmp/ossutil.zip \
             "https://gosspublic.alicdn.com/ossutil/v2/2.2.0/ossutil-2.2.0-linux-amd64.zip"
           unzip -q /tmp/ossutil.zip -d /tmp
           sudo mv /tmp/ossutil-2.2.0-linux-amd64/ossutil /usr/local/bin/
           ossutil version
-
-      - name: Configure AWS credentials for S3
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
-        run: |
-          aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
-          aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
-          aws configure set default.region "$S3_REGION"
-          aws configure set default.s3.addressing_style path
-          aws configure set endpoint_url "$S3_ENDPOINT"
 
       - name: Download all release assets
         env:
@@ -355,7 +342,10 @@ jobs:
           TAG="${RELEASE_TAG}"
           VERSION="${TAG#electron-v}"
           CHANNEL="${RELEASE_CHANNEL}"
-          S3_URL_PREFIX="${S3_CDN_BASE}/nuwaclaw-electron/${TAG}"
+          DOWNLOAD_URL_PREFIX="${OSS_CDN_BASE}/santiclaw-electron/${TAG}"
+          if [ "$CHANNEL" = "beta" ]; then
+            DOWNLOAD_URL_PREFIX="${OSS_CDN_BASE}/santiclaw-electron/beta-build/${TAG}"
+          fi
           ASSETS_DIR="/tmp/release-assets"
 
           # semver MVP guard: only allow numeric x.y.z
@@ -374,7 +364,7 @@ jobs:
 
           # 获取 release notes 与 pub_date
           RELEASE_JSON=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body,createdAt 2>/dev/null || echo '{}')
-          NOTES=$(echo "$RELEASE_JSON" | jq -r '.body // "NuwaClaw 功能优化和问题修复。建议更新到最新版本以获得更好的体验。"' | head -c 500)
+          NOTES=$(echo "$RELEASE_JSON" | jq -r '.body // "SantiClaw 功能优化和问题修复。建议更新到最新版本以获得更好的体验。"' | head -c 500)
           PUB_DATE=$(echo "$RELEASE_JSON" | jq -r '.createdAt // empty')
           if [ -z "$PUB_DATE" ]; then
             PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
@@ -393,7 +383,7 @@ jobs:
               size=$(stat -c%s "$filepath" 2>/dev/null || stat -f%z "$filepath")
               PLATFORMS=$(echo "$PLATFORMS" | jq \
                 --arg k "$key" \
-                --arg u "${S3_URL_PREFIX}/${file}" \
+                --arg u "${DOWNLOAD_URL_PREFIX}/${file}" \
                 --arg s "$sig" \
                 --argjson sz "$size" \
                 '. + {($k): {"url": $u, "signature": $s, "size": $sz}}')
@@ -403,21 +393,21 @@ jobs:
 
           PLATFORMS="{}"
           echo "==> Scanning release assets for platforms..."
-          add_platform "darwin-aarch64"     "NuwaClaw-${VERSION}-arm64.dmg"
-          add_platform "darwin-aarch64-zip" "NuwaClaw-${VERSION}-arm64-mac.zip"
-          add_platform "darwin-x86_64"      "NuwaClaw-${VERSION}.dmg"
-          add_platform "darwin-x86_64-zip"  "NuwaClaw-${VERSION}-mac.zip"
-          add_platform "windows-x86_64"      "NuwaClaw.Setup.${VERSION}.exe"
-          add_platform "windows-x86_64-nsis" "NuwaClaw.Setup.${VERSION}.exe"
-          add_platform "windows-x86_64-msi"  "NuwaClaw.${VERSION}.msi"
-          add_platform "linux-x86_64"          "NuwaClaw-${VERSION}.AppImage"
-          add_platform "linux-x86_64-appimage" "NuwaClaw-${VERSION}.AppImage"
-          add_platform "linux-x86_64-deb"      "NuwaClaw-${VERSION}-amd64.deb"
-          add_platform "linux-x86_64-rpm"      "NuwaClaw-${VERSION}-x86_64.rpm"
-          add_platform "linux-aarch64"          "NuwaClaw-${VERSION}-arm64.AppImage"
-          add_platform "linux-aarch64-appimage" "NuwaClaw-${VERSION}-arm64.AppImage"
-          add_platform "linux-aarch64-deb"      "NuwaClaw-${VERSION}-arm64.deb"
-          add_platform "linux-aarch64-rpm"      "NuwaClaw-${VERSION}-aarch64.rpm"
+          add_platform "darwin-aarch64"     "SantiClaw-${VERSION}-arm64.dmg"
+          add_platform "darwin-aarch64-zip" "SantiClaw-${VERSION}-arm64-mac.zip"
+          add_platform "darwin-x86_64"      "SantiClaw-${VERSION}.dmg"
+          add_platform "darwin-x86_64-zip"  "SantiClaw-${VERSION}-mac.zip"
+          add_platform "windows-x86_64"      "SantiClaw.Setup.${VERSION}.exe"
+          add_platform "windows-x86_64-nsis" "SantiClaw.Setup.${VERSION}.exe"
+          add_platform "windows-x86_64-msi"  "SantiClaw.${VERSION}.msi"
+          add_platform "linux-x86_64"          "SantiClaw-${VERSION}.AppImage"
+          add_platform "linux-x86_64-appimage" "SantiClaw-${VERSION}.AppImage"
+          add_platform "linux-x86_64-deb"      "SantiClaw-${VERSION}-amd64.deb"
+          add_platform "linux-x86_64-rpm"      "SantiClaw-${VERSION}-x86_64.rpm"
+          add_platform "linux-aarch64"          "SantiClaw-${VERSION}-arm64.AppImage"
+          add_platform "linux-aarch64-appimage" "SantiClaw-${VERSION}-arm64.AppImage"
+          add_platform "linux-aarch64-deb"      "SantiClaw-${VERSION}-arm64.deb"
+          add_platform "linux-aarch64-rpm"      "SantiClaw-${VERSION}-aarch64.rpm"
 
           if [ "$(echo "$PLATFORMS" | jq 'length')" = "0" ]; then
             echo "::warning::No exact filename matches, falling back to fuzzy scan"
@@ -477,11 +467,11 @@ jobs:
           gen_yml "latest" "$WIN_KEYS"
           echo "==> Platform yml written to ${ASSETS_DIR}"
 
-          # 构建 yml 文件的完整 S3 URL（供客户端 electron-updater 直接使用）
+          # 构建 yml 文件的完整 OSS URL（供客户端 electron-updater 直接使用）
           YML_URLS=$(jq -n \
-            --arg darwin "${S3_URL_PREFIX}/latest-mac.yml" \
-            --arg linux "${S3_URL_PREFIX}/latest-linux.yml" \
-            --arg win "${S3_URL_PREFIX}/latest.yml" \
+            --arg darwin "${DOWNLOAD_URL_PREFIX}/latest-mac.yml" \
+            --arg linux "${DOWNLOAD_URL_PREFIX}/latest-linux.yml" \
+            --arg win "${DOWNLOAD_URL_PREFIX}/latest.yml" \
             '{darwin: $darwin, linux: $linux, win: $win}')
 
           LATEST_JSON=$(jq -n \
@@ -495,47 +485,7 @@ jobs:
           echo "==> Generated latest.json"
           echo "$LATEST_JSON" | jq .
 
-      - name: Upload all assets to MinIO S3
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
-        run: |
-          TAG="${RELEASE_TAG}"
-          S3_PREFIX="nuwaclaw-electron/${TAG}"
-
-          for file in /tmp/release-assets/*; do
-            filename=$(basename "$file")
-            echo "Uploading to S3: ${filename}"
-            aws s3 cp "$file" "s3://${S3_BUCKET}/${S3_PREFIX}/${filename}" \
-              --endpoint-url "$S3_ENDPOINT"
-          done
-
-          # 同步 latest.json 到 S3（版本化路径 + 通道滚动指针）
-          echo "Uploading latest.json to S3..."
-          aws s3 cp /tmp/latest.json "s3://${S3_BUCKET}/${S3_PREFIX}/latest.json" \
-            --endpoint-url "$S3_ENDPOINT"
-          CHANNEL="${RELEASE_CHANNEL}"
-          if [ "$CHANNEL" = "stable" ]; then
-            aws s3 cp /tmp/latest.json "s3://${S3_BUCKET}/nuwaclaw-electron/latest/latest.json" \
-              --endpoint-url "$S3_ENDPOINT"
-          else
-            aws s3 cp /tmp/latest.json "s3://${S3_BUCKET}/nuwaclaw-electron/beta/latest.json" \
-              --endpoint-url "$S3_ENDPOINT"
-          fi
-
-      - name: Verify S3 upload
-        run: |
-          TAG="${RELEASE_TAG}"
-          VERIFY_URL="${S3_CDN_BASE}/nuwaclaw-electron/${TAG}/latest-mac.yml"
-          HTTP_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$VERIFY_URL")
-          if [ "$HTTP_STATUS" = "200" ]; then
-            echo "==> S3 upload verified: latest-mac.yml (HTTP ${HTTP_STATUS})"
-          else
-            echo "::error::S3 upload verification failed: latest-mac.yml (HTTP ${HTTP_STATUS})"
-            exit 1
-          fi
-
-      - name: Upload latest.json to Alibaba OSS
+      - name: Upload all assets and latest.json to Alibaba OSS
         env:
           OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
           OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
@@ -543,21 +493,37 @@ jobs:
           TAG="${RELEASE_TAG}"
           CHANNEL="${RELEASE_CHANNEL}"
           echo "==> Publishing latest.json to OSS for channel: ${CHANNEL}"
-          ossutil cp --force /tmp/latest.json "${OSS_BUCKET}/nuwaclaw-electron/${TAG}/latest.json" \
+          if [ "$CHANNEL" = "beta" ]; then
+            OSS_PREFIX="santiclaw-electron/beta-build/${TAG}"
+          else
+            OSS_PREFIX="santiclaw-electron/${TAG}"
+          fi
+
+          for file in /tmp/release-assets/*; do
+            filename=$(basename "$file")
+            echo "Uploading to OSS: ${filename}"
+            ossutil cp --force "$file" "${OSS_BUCKET}/${OSS_PREFIX}/${filename}" \
+              --endpoint "$OSS_ENDPOINT" \
+              --region "$OSS_REGION" \
+              --access-key-id "$OSS_ACCESS_KEY_ID" \
+              --access-key-secret "$OSS_ACCESS_KEY_SECRET"
+          done
+
+          ossutil cp --force /tmp/latest.json "${OSS_BUCKET}/${OSS_PREFIX}/latest.json" \
             --endpoint "$OSS_ENDPOINT" \
             --region "$OSS_REGION" \
             --access-key-id "$OSS_ACCESS_KEY_ID" \
             --access-key-secret "$OSS_ACCESS_KEY_SECRET"
 
           if [ "$CHANNEL" = "stable" ]; then
-            ossutil cp --force /tmp/latest.json "${OSS_BUCKET}/nuwaclaw-electron/latest/latest.json" \
+            ossutil cp --force /tmp/latest.json "${OSS_BUCKET}/santiclaw-electron/latest/latest.json" \
               --endpoint "$OSS_ENDPOINT" \
               --region "$OSS_REGION" \
               --access-key-id "$OSS_ACCESS_KEY_ID" \
               --access-key-secret "$OSS_ACCESS_KEY_SECRET"
             echo "==> Uploaded latest.json to stable pointer: latest/latest.json"
           else
-            ossutil cp --force /tmp/latest.json "${OSS_BUCKET}/nuwaclaw-electron/beta/latest.json" \
+            ossutil cp --force /tmp/latest.json "${OSS_BUCKET}/santiclaw-electron/beta/latest.json" \
               --endpoint "$OSS_ENDPOINT" \
               --region "$OSS_REGION" \
               --access-key-id "$OSS_ACCESS_KEY_ID" \
@@ -569,9 +535,9 @@ jobs:
         run: |
           CHANNEL="${RELEASE_CHANNEL}"
           if [ "$CHANNEL" = "stable" ]; then
-            VERIFY_URL="${OSS_CDN_BASE}/nuwaclaw-electron/latest/latest.json"
+            VERIFY_URL="${OSS_CDN_BASE}/santiclaw-electron/latest/latest.json"
           else
-            VERIFY_URL="${OSS_CDN_BASE}/nuwaclaw-electron/beta/latest.json"
+            VERIFY_URL="${OSS_CDN_BASE}/santiclaw-electron/beta/latest.json"
           fi
           HTTP_STATUS=$(curl -sS -o /tmp/oss-latest.json -w "%{http_code}" "$VERIFY_URL")
           if [ "$HTTP_STATUS" = "200" ]; then

@@ -1,4 +1,4 @@
-# NuwaClaw
+# SantiClaw
 
 Electron-based desktop client for Nuwax Agent, inspired by LobsterAI architecture.
 

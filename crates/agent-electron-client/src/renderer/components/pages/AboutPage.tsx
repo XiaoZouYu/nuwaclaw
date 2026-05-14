@@ -23,12 +23,12 @@ import {
   DownloadOutlined,
   LinkOutlined,
 } from "@ant-design/icons";
-import { APP_DISPLAY_NAME } from "@shared/constants";
+import { APP_DISPLAY_NAME, APP_ENGLISH_NAME } from "@shared/constants";
 import { t } from "../../services/core/i18n";
 import type { UpdateState } from "@shared/types/updateTypes";
 
 /** 官网地址，用于关于页「官网」链接 */
-const OFFICIAL_WEBSITE_URL = "https://nuwax.com";
+const OFFICIAL_WEBSITE_URL = "https://www.santisaas.com/";
 
 /** macOS/Linux 无 download-progress 时，模拟进度从 0 增长到该值（%） */
 const SIMULATED_PROGRESS_CAP = 90;
@@ -494,6 +494,17 @@ export default function AboutPage() {
         <div
           style={{
             marginTop: 8,
+            fontSize: 14,
+            letterSpacing: 0,
+            color: "var(--color-text-secondary)",
+            fontWeight: 600,
+          }}
+        >
+          {APP_ENGLISH_NAME}
+        </div>
+        <div
+          style={{
+            marginTop: 8,
             fontSize: 16,
             color: "var(--color-text-secondary)",
             fontWeight: 500,
@@ -511,7 +522,7 @@ export default function AboutPage() {
         >
           {t("Claw.About.crossPlatformDescription")}
         </div>
-        {/* 官网链接：点击在系统浏览器打开 nuwax.com */}
+        {/* 官网链接：点击在系统浏览器打开官网 */}
         <div style={{ marginTop: 12 }}>
           <span
             role="button"

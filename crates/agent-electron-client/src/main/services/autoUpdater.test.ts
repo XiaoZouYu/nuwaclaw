@@ -31,10 +31,10 @@ vi.mock("electron-log", () => ({
 vi.mock("electron", () => ({
   app: {
     isPackaged: true,
-    getName: () => "NuwaClaw",
+    getName: () => "SantiClaw",
     getPath: (name: string) => {
       if (name === "exe")
-        return "C:\\Users\\user\\AppData\\Local\\Programs\\NuwaClaw\\NuwaClaw.exe";
+        return "C:\\Users\\user\\AppData\\Local\\Programs\\SantiClaw\\SantiClaw.exe";
       return "";
     },
     getAppPath: () => "/app",
@@ -59,7 +59,7 @@ vi.mock("electron-updater", () => ({
 }));
 
 vi.mock("@shared/constants", () => ({
-  APP_DATA_DIR_NAME: ".nuwaclaw",
+  APP_DATA_DIR_NAME: ".santiclaw",
 }));
 
 vi.mock("../db", () => ({
@@ -143,9 +143,9 @@ describe("autoUpdater - getInstallerType & canAutoUpdate", () => {
       mockWin32();
     });
 
-    it("标准 NSIS: 存在 'Uninstall NuwaClaw.exe' 应返回 'nsis'", async () => {
+    it("标准 NSIS: 存在 'Uninstall SantiClaw.exe' 应返回 'nsis'", async () => {
       mockExistsSync.mockImplementation((...args: unknown[]) =>
-        String(args[0]).includes("Uninstall NuwaClaw.exe"),
+        String(args[0]).includes("Uninstall SantiClaw.exe"),
       );
 
       const { getInstallerType } = await importFresh();
@@ -182,7 +182,7 @@ describe("autoUpdater - getInstallerType & canAutoUpdate", () => {
 
     it("优先级: 标准 NSIS 优先于通用 NSIS", async () => {
       mockExistsSync.mockImplementation((...args: unknown[]) =>
-        String(args[0]).includes("Uninstall NuwaClaw.exe"),
+        String(args[0]).includes("Uninstall SantiClaw.exe"),
       );
       // 即使目录中也有 unins000.exe，应该先走 existsSync 的标准检测
       mockReaddirSync.mockReturnValue(["app.exe", "unins000.exe"]);
@@ -241,7 +241,7 @@ describe("autoUpdater - getInstallerType & canAutoUpdate", () => {
     it("NSIS 应支持自动更新", async () => {
       mockWin32();
       mockExistsSync.mockImplementation((...args: unknown[]) =>
-        String(args[0]).includes("Uninstall NuwaClaw.exe"),
+        String(args[0]).includes("Uninstall SantiClaw.exe"),
       );
 
       const { canAutoUpdate } = await importFresh();
@@ -277,7 +277,7 @@ describe("autoUpdater - yml URL 处理", () => {
     version: string;
   }): string {
     const OSS_BASE =
-      "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron";
+      "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron";
     const { ymlUrl, updateChannel, version } = params;
     // 从 yml 文件 URL 提取目录路径（electron-updater generic provider 期望目录 URL）
     const ymlDir = ymlUrl ? ymlUrl.replace(/\/[^/]+\.yml$/, "/") : null;
@@ -291,53 +291,53 @@ describe("autoUpdater - yml URL 处理", () => {
   describe("yml 文件 URL → 目录 URL 转换（供 electron-updater generic provider 使用）", () => {
     it("Windows: yml 文件 URL 应提取为目录 URL", () => {
       const ymlUrl =
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/latest.yml";
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/latest.yml";
       const result = deriveFeedUrl({
         ymlUrl,
         updateChannel: "beta",
         version: "0.10.7",
       });
       expect(result).toBe(
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/",
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/",
       );
     });
 
     it("macOS: yml 文件 URL 应提取为目录 URL", () => {
       const ymlUrl =
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/latest-mac.yml";
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/latest-mac.yml";
       const result = deriveFeedUrl({
         ymlUrl,
         updateChannel: "beta",
         version: "0.10.7",
       });
       expect(result).toBe(
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/",
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/",
       );
     });
 
     it("Linux: yml 文件 URL 应提取为目录 URL", () => {
       const ymlUrl =
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/latest-linux.yml";
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/latest-linux.yml";
       const result = deriveFeedUrl({
         ymlUrl,
         updateChannel: "beta",
         version: "0.10.7",
       });
       expect(result).toBe(
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/",
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/",
       );
     });
 
     it("stable 通道: yml 文件 URL 应提取为目录 URL", () => {
       const ymlUrl =
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/electron-v0.10.7/latest.yml";
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/electron-v0.10.7/latest.yml";
       const result = deriveFeedUrl({
         ymlUrl,
         updateChannel: "stable",
         version: "0.10.7",
       });
       expect(result).toBe(
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/electron-v0.10.7/",
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/electron-v0.10.7/",
       );
     });
   });
@@ -350,7 +350,7 @@ describe("autoUpdater - yml URL 处理", () => {
         version: "0.10.7",
       });
       expect(result).toBe(
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7",
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7",
       );
     });
 
@@ -361,7 +361,7 @@ describe("autoUpdater - yml URL 处理", () => {
         version: "0.10.7",
       });
       expect(result).toBe(
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/electron-v0.10.7",
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/electron-v0.10.7",
       );
     });
   });
@@ -383,26 +383,26 @@ describe("autoUpdater - yml URL 处理", () => {
 
     it("目录 URL 传给 electron-updater 应拼接出正确的 yml 文件路径", () => {
       const feedUrl =
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/";
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/";
       const windowsResult = simulateGenericProvider("latest.yml", feedUrl);
       const macResult = simulateGenericProvider("latest-mac.yml", feedUrl);
       const linuxResult = simulateGenericProvider("latest-linux.yml", feedUrl);
 
       expect(windowsResult).toBe(
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/latest.yml",
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/latest.yml",
       );
       expect(macResult).toBe(
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/latest-mac.yml",
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/latest-mac.yml",
       );
       expect(linuxResult).toBe(
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/latest-linux.yml",
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/latest-linux.yml",
       );
     });
 
     it("文件 URL 传给 electron-updater 会导致路径重复（Bug 演示）", () => {
       // 这是之前错误的做法：直接传文件 URL
       const fileUrl =
-        "https://nuwa-packages.oss-rg-china-mainland.aliyuncs.com/nuwaclaw-electron/beta-build/prerelease-v0.10.7/latest.yml";
+        "https://santisaas.oss-cn-chengdu.aliyuncs.com/santiclaw-electron/beta-build/prerelease-v0.10.7/latest.yml";
       const result = simulateGenericProvider("latest.yml", fileUrl);
 
       // URL 构造器会将 /latest.yml 当作文件名，拼接后变成 /beta-build/prerelease-v0.10.7//latest.yml/latest.yml

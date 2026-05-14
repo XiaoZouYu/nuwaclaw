@@ -10,6 +10,7 @@
 import log from "electron-log";
 import * as path from "path";
 import { app } from "electron";
+import { APP_DATA_DIR_NAME } from "../constants";
 import { t } from "../i18n";
 import { getCurrentPlatform } from "../system/platformAdapter";
 import { DockerSandbox } from "./DockerSandbox";
@@ -54,7 +55,7 @@ function getPlatform(): Platform {
  */
 function getWorkspaceRoot(): string {
   const homeDir = app.getPath("home");
-  return path.join(homeDir, ".nuwaclaw", "sandboxes");
+  return path.join(homeDir, APP_DATA_DIR_NAME, "sandboxes");
 }
 
 /**

@@ -1,5 +1,5 @@
 /**
- * 依赖管理服务 - NuwaClaw 版本
+ * 依赖管理服务 - SantiClaw 版本
  *
  * 对应 Tauri 版本的 dependencies.ts
  * 管理本地依赖的检测、安装、版本检查
@@ -115,7 +115,7 @@ export function getMirrorConfig(): MirrorConfig {
 
 // ==================== App Paths ====================
 
-// 获取应用数据目录 — 统一使用 ~/.nuwaclaw/
+// 获取应用数据目录 — 统一使用 ~/.santiclaw/
 function getAppDataDir(): string {
   return path.join(app.getPath("home"), APP_DATA_DIR_NAME);
 }
@@ -128,7 +128,7 @@ function getAppNodeModules(): string {
   return path.join(getAppDataDir(), "node_modules");
 }
 
-/** 初始化依赖同步状态文件名（~/.nuwaclaw/.init-deps-state.json） */
+/** 初始化依赖同步状态文件名（~/.santiclaw/.init-deps-state.json） */
 const INIT_DEPS_STATE_FILENAME = ".init-deps-state.json";
 
 export interface InitDepsState {
@@ -372,7 +372,7 @@ function findSystemNode(): string | null {
 /**
  * 应用内集成：确保 uv/uvx 在应用内可用。
  * 若 bundled（getUvBinPath）不存在，但 resources/uv/bin 存在（如开发环境已执行 prepare:uv），
- * 则一次性复制到 ~/.nuwaclaw/bin，该目录已在 PATH 中，后续 MCP 等子进程即可找到 uv/uvx。
+ * 则一次性复制到 ~/.santiclaw/bin，该目录已在 PATH 中，后续 MCP 等子进程即可找到 uv/uvx。
  */
 function ensureUvInAppBin(): void {
   try {
@@ -508,7 +508,7 @@ export function getNuwaxcodeBundledBinPath(): string | null {
 
 // 可选：若曾在 resources/windows-mcp/bin/ 预置 windows-mcp.exe（旧方案），则返回该路径。
 // 当前主线：prepare 仅打包 wheels/ + manifest.json，首次运行由 windowsMcp.ts 调用
-// `uv tool install --no-index --find-links <wheels>` 安装到用户目录 ~/.nuwaclaw/windows-mcp-runtime/。
+// `uv tool install --no-index --find-links <wheels>` 安装到用户目录 ~/.santiclaw/windows-mcp-runtime/。
 export function getWindowsMcpBinPath(): string | null {
   if (os.platform() !== "win32") {
     return null;

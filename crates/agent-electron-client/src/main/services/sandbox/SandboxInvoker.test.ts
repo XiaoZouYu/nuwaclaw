@@ -176,12 +176,12 @@ describe("SandboxInvoker - macos-seatbelt", () => {
 
     expect(result.command).toBe("/usr/bin/sandbox-exec");
     expect(result.args[0]).toBe("-f");
-    expect(result.args[1]).toMatch(/nuwaclaw-sandbox-\d+-[a-z0-9]+\.sb$/);
+    expect(result.args[1]).toMatch(/santiclaw-sandbox-\d+-[a-z0-9]+\.sb$/);
     expect(result.args[2]).toBe("/usr/bin/node");
     expect(result.args[3]).toBe("--version");
     expect(result.seatbeltProfilePath).toBeDefined();
     expect(result.seatbeltProfilePath).toMatch(
-      /nuwaclaw-sandbox-\d+-[a-z0-9]+\.sb$/,
+      /santiclaw-sandbox-\d+-[a-z0-9]+\.sb$/,
     );
   });
 
@@ -352,7 +352,7 @@ describe("SandboxInvoker - macos-seatbelt", () => {
     const writeCall = mockFspWriteFile.mock.calls[0];
     const profilePath = writeCall[0] as string;
 
-    expect(profilePath).toMatch(/^\/tmp\/nuwaclaw-sandbox-\d+-[a-z0-9]+\.sb$/);
+    expect(profilePath).toMatch(/^\/tmp\/santiclaw-sandbox-\d+-[a-z0-9]+\.sb$/);
   });
 });
 

@@ -102,14 +102,14 @@ export WINDOWS_PUBLISHER_NAME="成都第二空间智能科技有限公司"
 ```bash
 # 查看 release 中的 Windows 安装包
 gh release view electron-v0.9.2 --repo nuwax-ai/nuwaclaw --json assets \
-  --jq '.assets[] | select(.name | test("NuwaClaw.*\\.(exe|msi)$")) | .name'
+  --jq '.assets[] | select(.name | test("SantiClaw.*\\.(exe|msi)$")) | .name'
 ```
 
 **判断标准：**
 | 文件名模式 | 签名状态 | 操作 |
 |-----------|---------|------|
 | `*-unsigned.exe` / `*-unsigned.msi` | 未签名 | 需要执行签名 |
-| `NuwaClaw-Setup-x.x.x.exe` / `NuwaClaw-x.x.x.msi` | 已签名 | 无需操作 |
+| `SantiClaw-Setup-x.x.x.exe` / `SantiClaw-x.x.x.msi` | 已签名 | 无需操作 |
 
 ### 方法二：下载并验证签名
 
@@ -117,11 +117,11 @@ gh release view electron-v0.9.2 --repo nuwax-ai/nuwaclaw --json assets \
 # 下载文件到临时目录
 mkdir -p /c/tmp/nuwaclaw-sign/check && cd /c/tmp/nuwaclaw-sign/check
 gh release download electron-v0.9.2 --repo nuwax-ai/nuwaclaw \
-  --pattern "NuwaClaw-Setup-*.exe" --pattern "NuwaClaw-*.msi"
+  --pattern "SantiClaw-Setup-*.exe" --pattern "SantiClaw-*.msi"
 
 # 验证签名
 "/c/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x64/signtool.exe" \
-  verify //pa //all NuwaClaw-Setup-0.9.2.exe
+  verify //pa //all SantiClaw-Setup-0.9.2.exe
 ```
 
 **输出解读：**
@@ -169,10 +169,10 @@ cd crates/agent-electron-client
 
 ```
 Release 资产列表:
-├── NuwaClaw-Setup-0.9.2.exe          # 旧的已签名文件
-├── NuwaClaw-0.9.2.msi                # 旧的已签名文件
-├── NuwaClaw-Setup-0.9.2-unsigned.exe # 新的未签名文件 (CI 重新构建)
-└── NuwaClaw-0.9.2-unsigned.msi       # 新的未签名文件 (CI 重新构建)
+├── SantiClaw-Setup-0.9.2.exe          # 旧的已签名文件
+├── SantiClaw-0.9.2.msi                # 旧的已签名文件
+├── SantiClaw-Setup-0.9.2-unsigned.exe # 新的未签名文件 (CI 重新构建)
+└── SantiClaw-0.9.2-unsigned.msi       # 新的未签名文件 (CI 重新构建)
 ```
 
 **处理方式：** 直接运行签名脚本，它会：
@@ -213,20 +213,20 @@ gh release view electron-v0.9.2 --repo nuwax-ai/nuwaclaw --json assets \
 ```
 C:\tmp\nuwaclaw-sign\
 ├── unsigned/                              # 从 GitHub 下载的未签名文件
-│   ├── NuwaClaw-Setup-0.9.2-unsigned.exe
-│   └── NuwaClaw-0.9.2-unsigned.msi
+│   ├── SantiClaw-Setup-0.9.2-unsigned.exe
+│   └── SantiClaw-0.9.2-unsigned.msi
 │
 └── signed/                                # 已签名文件（重命名为正式名称）
-    ├── NuwaClaw-Setup-0.9.2.exe
-    └── NuwaClaw-0.9.2.msi
+    ├── SantiClaw-Setup-0.9.2.exe
+    └── SantiClaw-0.9.2.msi
 ```
 
 ## 文件命名规则
 
 | 阶段 | EXE 文件名 | MSI 文件名 |
 |------|-----------|-----------|
-| CI 构建 | `NuwaClaw-Setup-{version}-unsigned.exe` | `NuwaClaw-{version}-unsigned.msi` |
-| 本地签名后 | `NuwaClaw-Setup-{version}.exe` | `NuwaClaw-{version}.msi` |
+| CI 构建 | `SantiClaw-Setup-{version}-unsigned.exe` | `SantiClaw-{version}-unsigned.msi` |
+| 本地签名后 | `SantiClaw-Setup-{version}.exe` | `SantiClaw-{version}.msi` |
 
 ## 流程步骤说明
 
