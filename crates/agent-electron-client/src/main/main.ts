@@ -4,7 +4,6 @@ import {
   Menu,
   dialog,
   ipcMain,
-  Tray,
   nativeImage,
   session,
 } from "electron";
@@ -39,6 +38,10 @@ import { initAutoUpdater } from "./services/autoUpdater";
 import { migrateDataDir, migrateSettingsPaths } from "./bootstrap/migrate";
 import { getDeviceId, logSystemInfo } from "./services/system/deviceId";
 import { initWebviewPolicy } from "./services/system/webviewPolicy";
+import { focusExistingMainWindow } from "./window/mainWindowFocus";
+import { setupSingleInstanceLock } from "./window/singleInstance";
+import { stopAllEngines } from "./services/engines/engineManager";
+import { processRegistry } from "./services/system/processRegistry";
 
 // macOS 26 Tahoe 兼容性：禁用 Fontations 字体后端
 // 参考: https://github.com/electron/electron/issues/49522
@@ -108,28 +111,14 @@ let isInstallingUpdate = false; // 标志：是否正在执行 quitAndInstall �
 let pendingSecondInstanceFocus = false; // 标志：窗口未创建前收到 second-instance 事件
 
 // 单实例保护：Windows 托盘常驻场景下再次启动时，复用当前实例而不是创建新实例
-const hasSingleInstanceLock = app.requestSingleInstanceLock();
-if (!hasSingleInstanceLock) {
-  log.warn("[App] Another instance is already running, quitting current one");
-  app.quit();
-}
-
-app.on("second-instance", () => {
-  log.info("[App] second-instance event received");
-  if (!mainWindow) {
+const isPrimaryInstance = setupSingleInstanceLock({
+  app,
+  getMainWindow: () => mainWindow,
+  createWindow: () => createWindow(),
+  markSecondInstancePending: () => {
     pendingSecondInstanceFocus = true;
-    if (app.isReady()) {
-      createWindow();
-    }
-    return;
-  }
-  if (mainWindow.isMinimized()) {
-    mainWindow.restore();
-  }
-  if (!mainWindow.isVisible()) {
-    mainWindow.show();
-  }
-  mainWindow.focus();
+  },
+  logger: log,
 });
 
 // Get icon path (works in both dev and production)
@@ -180,6 +169,10 @@ const guiServer = new ManagedProcess("gui-agent-server");
 let agentRunnerPorts: { backendPort: number; proxyPort: number } | null = null;
 
 function createWindow() {
+  if (focusExistingMainWindow(mainWindow)) {
+    return;
+  }
+
   mainWindow = new BrowserWindow({
     width: DEFAULT_WINDOW_WIDTH,
     height: DEFAULT_WINDOW_HEIGHT,
@@ -401,13 +394,11 @@ async function cleanupAllProcesses(): Promise<void> {
   }
 
   await runCleanupStep("Engine processes stop", () => {
-    const { stopAllEngines } = require("./services/engines/engineManager");
     stopAllEngines();
     log.info("[Cleanup] Engine processes stopped");
   });
 
   await runCleanupStep("Process registry killAll", async () => {
-    const { processRegistry } = require("./services/system/processRegistry");
     await processRegistry.killAll();
     log.info("[Cleanup] Process registry cleared");
   });
@@ -423,186 +414,185 @@ async function cleanupAllProcesses(): Promise<void> {
 }
 
 // App lifecycle
-app.whenReady().then(async () => {
-  if (!hasSingleInstanceLock) {
-    return;
-  }
+if (isPrimaryInstance) {
+  app.whenReady().then(async () => {
+    log.info("App ready");
+    logSystemInfo();
 
-  log.info("App ready");
-  logSystemInfo();
+    // Dev mode: fix CORS duplicate header issue
+    // Server returns both specific origin and '*', causing browser to reject.
+    // Strip duplicate Access-Control-Allow-Origin values.
+    if (isDev) {
+      session.defaultSession.webRequest.onHeadersReceived(
+        (details, callback) => {
+          const headers = details.responseHeaders;
+          if (headers) {
+            const acoKey = Object.keys(headers).find(
+              (k) => k.toLowerCase() === "access-control-allow-origin",
+            );
+            if (acoKey && headers[acoKey] && headers[acoKey].length > 1) {
+              // Keep only the specific origin (not '*')
+              const specific = headers[acoKey].find((v) => v !== "*");
+              headers[acoKey] = [specific || "*"];
+              // 仅在确实修改了 ACO 时才回传 responseHeaders，
+              // 避免无条件替换导致 Set-Cookie 被 Chromium 网络服务丢弃
+              callback({ responseHeaders: headers });
+              return;
+            }
+          }
+          // 未修改任何 header → 不传 responseHeaders，Chromium 原样传递
+          callback({});
+        },
+      );
+      log.info("Dev CORS fix enabled");
+    }
 
-  // Dev mode: fix CORS duplicate header issue
-  // Server returns both specific origin and '*', causing browser to reject.
-  // Strip duplicate Access-Control-Allow-Origin values.
-  if (isDev) {
-    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-      const headers = details.responseHeaders;
-      if (headers) {
-        const acoKey = Object.keys(headers).find(
-          (k) => k.toLowerCase() === "access-control-allow-origin",
+    // Set Dock icon on macOS (development mode needs this)
+    if (process.platform === "darwin" && app.dock) {
+      const iconPath = getDockIconPath();
+      log.info("Setting Dock icon from:", iconPath);
+      try {
+        const iconImage = nativeImage.createFromPath(iconPath);
+        log.info(
+          "Icon image size:",
+          iconImage.getSize(),
+          "isEmpty:",
+          iconImage.isEmpty(),
         );
-        if (acoKey && headers[acoKey] && headers[acoKey].length > 1) {
-          // Keep only the specific origin (not '*')
-          const specific = headers[acoKey].find((v) => v !== "*");
-          headers[acoKey] = [specific || "*"];
-          // 仅在确实修改了 ACO 时才回传 responseHeaders，
-          // 避免无条件替换导致 Set-Cookie 被 Chromium 网络服务丢弃
-          callback({ responseHeaders: headers });
-          return;
+        if (!iconImage.isEmpty()) {
+          app.dock.setIcon(iconImage);
+          log.info("Dock icon set successfully");
+        } else {
+          log.warn("Icon image is empty");
         }
+      } catch (e) {
+        log.warn("Failed to set Dock icon:", e);
       }
-      // 未修改任何 header → 不传 responseHeaders，Chromium 原样传递
-      callback({});
-    });
-    log.info("Dev CORS fix enabled");
-  }
-
-  // Set Dock icon on macOS (development mode needs this)
-  if (process.platform === "darwin" && app.dock) {
-    const iconPath = getDockIconPath();
-    log.info("Setting Dock icon from:", iconPath);
-    try {
-      const iconImage = nativeImage.createFromPath(iconPath);
-      log.info(
-        "Icon image size:",
-        iconImage.getSize(),
-        "isEmpty:",
-        iconImage.isEmpty(),
-      );
-      if (!iconImage.isEmpty()) {
-        app.dock.setIcon(iconImage);
-        log.info("Dock icon set successfully");
-      } else {
-        log.warn("Icon image is empty");
-      }
-    } catch (e) {
-      log.warn("Failed to set Dock icon:", e);
     }
-  }
 
-  migrateDataDir();
-  initDatabase();
-  migrateSettingsPaths();
-  getDeviceId();
+    migrateDataDir();
+    initDatabase();
+    migrateSettingsPaths();
+    getDeviceId();
 
-  // 数据库就绪后，同步语言到主进程 i18n
-  // 优先级：本地保存 > Electron 系统语言 > 英文兜底
-  const savedLang = readSetting("i18n.active_lang") as string | undefined;
-  if (savedLang) {
-    setMainLang(savedLang);
-  } else {
-    // 无本地偏好：用 Electron 系统语言（app.ready 后可靠）
-    setMainLang(app.getLocale() || "en");
-  }
+    // 数据库就绪后，同步语言到主进程 i18n
+    // 优先级：本地保存 > Electron 系统语言 > 英文兜底
+    const savedLang = readSetting("i18n.active_lang") as string | undefined;
+    if (savedLang) {
+      setMainLang(savedLang);
+    } else {
+      // 无本地偏好：用 Electron 系统语言（app.ready 后可靠）
+      setMainLang(app.getLocale() || "en");
+    }
 
-  const ctx: HandlerContext = {
-    getMainWindow: () => mainWindow,
-    lanproxy,
-    fileServer,
-    agentRunner,
-    guiServer,
-    get agentRunnerPorts() {
-      return agentRunnerPorts;
-    },
-    setAgentRunnerPorts: (ports) => {
-      agentRunnerPorts = ports;
-    },
-  };
+    const ctx: HandlerContext = {
+      getMainWindow: () => mainWindow,
+      lanproxy,
+      fileServer,
+      agentRunner,
+      guiServer,
+      get agentRunnerPorts() {
+        return agentRunnerPorts;
+      },
+      setAgentRunnerPorts: (ports) => {
+        agentRunnerPorts = ports;
+      },
+    };
 
-  registerAllHandlers(ctx);
-  await runStartupTasks();
+    registerAllHandlers(ctx);
+    await runStartupTasks();
 
-  createWindow();
-  if (pendingSecondInstanceFocus && mainWindow) {
-    pendingSecondInstanceFocus = false;
-    mainWindow.show();
-    mainWindow.focus();
-  }
-  initWebviewPolicy(() => mainWindow);
-
-  // 非 macOS 或已打包：立即创建托盘。macOS 开发模式改为在 ready-to-show 后创建
-  if (!(process.platform === "darwin" && !app.isPackaged)) {
-    if (process.platform === "darwin" && app.dock) app.dock.show();
-    await initTrayManager();
-  }
-
-  initAutoUpdater(
-    () => mainWindow,
-    cleanupAllProcesses,
-    () => {
-      // 在 quitAndInstall 前被调用：
-      // - isQuitting=true 防止窗口 close 事件被拦截到托盘
-      // - isInstallingUpdate=true 让 before-quit 跳过 e.preventDefault()，
-      //   保留 Squirrel.Mac 的正常退出流程
-      isQuitting = true;
-      isInstallingUpdate = true;
-      log.info(
-        "[App] Update install flagged: isQuitting=true, isInstallingUpdate=true",
-      );
-    },
-  );
-});
-
-app.on("window-all-closed", () => {
-  // 窗口已隐藏到托盘，此事件不应触发
-  // 如果触发，说明窗口被意外关闭，不退出应用
-  log.info(
-    "[App] window-all-closed event fired (should not happen with tray mode)",
-  );
-});
-
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
-  }
-});
-
-let isCleaningUp = false;
-
-app.on("before-quit", (e) => {
-  if (isCleaningUp) return;
-  isCleaningUp = true;
-  isQuitting = true; // 通知窗口 close 事件允许关闭
-
-  if (isInstallingUpdate) {
-    // quitAndInstall 场景（macOS Squirrel.Mac / Windows NSIS / Linux AppImage 均走此路径）：
-    // - cleanup 已在 installUpdate() 中先行触发，无需重复执行
-    // - 不能调用 e.preventDefault()：各平台安装器依赖 app.quit() 的正常退出流程；
-    //   若阻止退出再 app.exit(0)，安装器可能已经失去对退出时机的感知，导致安装失败
-    // 只关闭数据库后直接 return，让 Electron 正常完成退出，安装器接管
-    log.info(
-      "[App] Before quit - update install in progress, skipping preventDefault to allow installer",
-    );
-    closeDb();
-    return;
-  }
-
-  // 普通退出流程：阻止立即退出，异步清理完成后再调用 app.exit(0)
-  e.preventDefault();
-
-  log.info("[App] Before quit - starting cleanup");
-
-  void (async () => {
-    const start = Date.now();
-    try {
-      await cleanupAllProcesses();
-    } finally {
-      const elapsed = Date.now() - start;
-      if (elapsed > CLEANUP_TIMEOUT) {
-        log.warn(
-          `[App] Cleanup exceeded budget (${elapsed}ms > ${CLEANUP_TIMEOUT}ms), forcing exit`,
-        );
-      }
-      closeDb();
-      log.info("[App] Cleanup complete, exiting");
-      app.exit(0);
+    if (pendingSecondInstanceFocus) {
+      pendingSecondInstanceFocus = false;
+      focusExistingMainWindow(mainWindow);
     }
-  })();
-});
+    initWebviewPolicy(() => mainWindow);
 
-app.on("will-quit", () => {
-  log.info("[App] Will quit");
-});
+    // 非 macOS 或已打包：立即创建托盘。macOS 开发模式改为在 ready-to-show 后创建
+    if (!(process.platform === "darwin" && !app.isPackaged)) {
+      if (process.platform === "darwin" && app.dock) app.dock.show();
+      await initTrayManager();
+    }
+
+    initAutoUpdater(
+      () => mainWindow,
+      cleanupAllProcesses,
+      () => {
+        // 在 quitAndInstall 前被调用：
+        // - isQuitting=true 防止窗口 close 事件被拦截到托盘
+        // - isInstallingUpdate=true 让 before-quit 跳过 e.preventDefault()，
+        //   保留 Squirrel.Mac 的正常退出流程
+        isQuitting = true;
+        isInstallingUpdate = true;
+        log.info(
+          "[App] Update install flagged: isQuitting=true, isInstallingUpdate=true",
+        );
+      },
+    );
+  });
+
+  app.on("window-all-closed", () => {
+    // 窗口已隐藏到托盘，此事件不应触发
+    // 如果触发，说明窗口被意外关闭，不退出应用
+    log.info(
+      "[App] window-all-closed event fired (should not happen with tray mode)",
+    );
+  });
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+
+  let isCleaningUp = false;
+
+  app.on("before-quit", (e) => {
+    if (isCleaningUp) return;
+    isCleaningUp = true;
+    isQuitting = true; // 通知窗口 close 事件允许关闭
+
+    if (isInstallingUpdate) {
+      // quitAndInstall 场景（macOS Squirrel.Mac / Windows NSIS / Linux AppImage 均走此路径）：
+      // - cleanup 已在 installUpdate() 中先行触发，无需重复执行
+      // - 不能调用 e.preventDefault()：各平台安装器依赖 app.quit() 的正常退出流程；
+      //   若阻止退出再 app.exit(0)，安装器可能已经失去对退出时机的感知，导致安装失败
+      // 只关闭数据库后直接 return，让 Electron 正常完成退出，安装器接管
+      log.info(
+        "[App] Before quit - update install in progress, skipping preventDefault to allow installer",
+      );
+      closeDb();
+      return;
+    }
+
+    // 普通退出流程：阻止立即退出，异步清理完成后再调用 app.exit(0)
+    e.preventDefault();
+
+    log.info("[App] Before quit - starting cleanup");
+
+    void (async () => {
+      const start = Date.now();
+      try {
+        await cleanupAllProcesses();
+      } finally {
+        const elapsed = Date.now() - start;
+        if (elapsed > CLEANUP_TIMEOUT) {
+          log.warn(
+            `[App] Cleanup exceeded budget (${elapsed}ms > ${CLEANUP_TIMEOUT}ms), forcing exit`,
+          );
+        }
+        closeDb();
+        log.info("[App] Cleanup complete, exiting");
+        app.exit(0);
+      }
+    })();
+  });
+
+  app.on("will-quit", () => {
+    log.info("[App] Will quit");
+  });
+}
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
