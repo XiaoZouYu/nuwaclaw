@@ -1,6 +1,6 @@
 {
   "name": "@nuwax-ai/santiclaw",
-  "version": "0.9.7",
+  "version": "1.1.0",
   "description": "SantiClaw Desktop Client (Electron)",
   "main": "dist/main/main.js",
   "author": "Nuwax Team",
