@@ -4,13 +4,12 @@ import {
   Menu,
   dialog,
   ipcMain,
-  Tray,
   nativeImage,
   session,
 } from "electron";
 import * as path from "path";
 import log from "electron-log";
-import { initDatabase, closeDb } from "./db";
+import { initDatabase, closeDb, readSetting } from "./db";
 import { ManagedProcess } from "./processManager";
 import { registerAllHandlers } from "./ipc/index";
 import { unregisterEventForwarders } from "./ipc/eventForwarders";
@@ -18,16 +17,31 @@ import { runStartupTasks } from "./bootstrap/startup";
 import { agentService } from "./services/engines/unifiedAgent";
 import { stopComputerServer } from "./services/computerServer";
 import { mcpProxyManager } from "./services/packages/mcp";
+import { stopGuiAgentServer } from "./services/packages/guiAgentServer";
+import { FEATURES } from "@shared/featureFlags";
+import { stopWindowsMcp } from "./services/packages/windowsMcp";
 import type { HandlerContext } from "@shared/types/ipc";
 import { DEFAULT_DEV_SERVER_PORT } from "./services/constants";
-import { APP_DISPLAY_NAME, CLEANUP_TIMEOUT } from "@shared/constants";
+import {
+  APP_DISPLAY_NAME,
+  CLEANUP_TIMEOUT,
+  DEFAULT_WINDOW_HEIGHT,
+  DEFAULT_WINDOW_MIN_HEIGHT,
+  DEFAULT_WINDOW_MIN_WIDTH,
+  DEFAULT_WINDOW_WIDTH,
+} from "@shared/constants";
 import { initLogging } from "./bootstrap/logConfig";
+import { initI18n, setMainLang } from "./services/i18n";
 import { createTrayManager, TrayStatus } from "./window/trayManager";
 import { createServiceManager } from "./window/serviceManager";
 import { initAutoUpdater } from "./services/autoUpdater";
 import { migrateDataDir, migrateSettingsPaths } from "./bootstrap/migrate";
-import { getDeviceId } from "./services/system/deviceId";
+import { getDeviceId, logSystemInfo } from "./services/system/deviceId";
 import { initWebviewPolicy } from "./services/system/webviewPolicy";
+import { focusExistingMainWindow } from "./window/mainWindowFocus";
+import { setupSingleInstanceLock } from "./window/singleInstance";
+import { stopAllEngines } from "./services/engines/engineManager";
+import { processRegistry } from "./services/system/processRegistry";
 
 // macOS 26 Tahoe 兼容性：禁用 Fontations 字体后端
 // 参考: https://github.com/electron/electron/issues/49522
@@ -85,13 +99,27 @@ if (process.platform === "linux") {
 
 // 日志：轮转 + TTL 清理 + 开发/正式差异化（见 logConfig.ts）
 initLogging();
+initI18n();
 log.info("Application starting...");
+log.info("[FeatureFlags][main]", FEATURES);
 
 // Global references
 let mainWindow: BrowserWindow | null = null;
 let trayManager: ReturnType<typeof createTrayManager> | null = null;
 let isQuitting = false; // 标志：是否正在真正退出应用
 let isInstallingUpdate = false; // 标志：是否正在执行 quitAndInstall 安装更新
+let pendingSecondInstanceFocus = false; // 标志：窗口未创建前收到 second-instance 事件
+
+// 单实例保护：Windows 托盘常驻场景下再次启动时，复用当前实例而不是创建新实例
+const isPrimaryInstance = setupSingleInstanceLock({
+  app,
+  getMainWindow: () => mainWindow,
+  createWindow: () => createWindow(),
+  markSecondInstancePending: () => {
+    pendingSecondInstanceFocus = true;
+  },
+  logger: log,
+});
 
 // Get icon path (works in both dev and production)
 function getIconPath() {
@@ -118,19 +146,38 @@ function getDockIconPath() {
 }
 
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
+const WEBVIEW_PERF_BRIDGE_PRELOAD = path.join(
+  __dirname,
+  "..",
+  "preload",
+  "webviewPerfBridge.js",
+);
+function shouldInjectWebviewPerfBridge(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return /^https?:$/.test(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
 
 // Managed child processes
 const lanproxy = new ManagedProcess("lanproxy");
 const fileServer = new ManagedProcess("fileServer");
 const agentRunner = new ManagedProcess("agentRunner");
+const guiServer = new ManagedProcess("gui-agent-server");
 let agentRunnerPorts: { backendPort: number; proxyPort: number } | null = null;
 
 function createWindow() {
+  if (focusExistingMainWindow(mainWindow)) {
+    return;
+  }
+
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 800,
-    minHeight: 600,
+    width: DEFAULT_WINDOW_WIDTH,
+    height: DEFAULT_WINDOW_HEIGHT,
+    minWidth: DEFAULT_WINDOW_MIN_WIDTH,
+    minHeight: DEFAULT_WINDOW_MIN_HEIGHT,
     title: APP_DISPLAY_NAME,
     icon: getIconPath(),
     webPreferences: {
@@ -143,6 +190,20 @@ function createWindow() {
     },
     show: false,
   });
+
+  // 为 webview guest 注入轻量 Bridge（SantiClawBridge）。
+  // 当前策略：对所有 http/https 页面注入；真正是否生效由 guest 侧路由+容器二次判断。
+  mainWindow.webContents.on(
+    "will-attach-webview",
+    (_event, webPreferences, params) => {
+      const targetUrl = String(params.src || "");
+      if (!shouldInjectWebviewPerfBridge(targetUrl)) {
+        return;
+      }
+      webPreferences.preload = WEBVIEW_PERF_BRIDGE_PRELOAD;
+      log.info("[WebviewBridge] Injected guest preload for:", targetUrl);
+    },
+  );
 
   // Load the app
   if (isDev) {
@@ -270,201 +331,268 @@ ipcMain.handle("tray:updateServicesStatus", (_, running: boolean) => {
 async function cleanupAllProcesses(): Promise<void> {
   log.info("[Cleanup] Stopping all processes...");
 
-  try {
+  const stepTimeoutMs = Math.max(1500, Math.floor(CLEANUP_TIMEOUT / 6));
+  const runCleanupStep = async (
+    label: string,
+    fn: () => Promise<void> | void,
+  ): Promise<void> => {
+    let completed = false;
+    let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+    const task = (async () => {
+      try {
+        await fn();
+      } catch (e) {
+        log.error(`[Cleanup] ${label} error:`, e);
+      } finally {
+        completed = true;
+        if (timeoutHandle) {
+          clearTimeout(timeoutHandle);
+          timeoutHandle = null;
+        }
+      }
+    })();
+    await Promise.race([
+      task,
+      new Promise<void>((resolve) => {
+        timeoutHandle = setTimeout(() => {
+          if (!completed) {
+            log.warn(`[Cleanup] ${label} timed out after ${stepTimeoutMs}ms`);
+          }
+          timeoutHandle = null;
+          resolve();
+        }, stepTimeoutMs);
+      }),
+    ]);
+  };
+
+  await runCleanupStep("Computer server stop", async () => {
     await stopComputerServer();
-  } catch (e) {
-    log.error("[Cleanup] Computer server stop error:", e);
-  }
+  });
 
-  try {
+  await runCleanupStep("Event forwarders unregister", () => {
     unregisterEventForwarders();
-  } catch (e) {
-    log.error("[Cleanup] Event forwarders unregister error:", e);
-  }
+  });
 
-  try {
+  await runCleanupStep("Agent service destroy", async () => {
     await agentService.destroy();
-  } catch (e) {
-    log.error("[Cleanup] Agent service destroy error:", e);
+  });
+
+  await runCleanupStep("MCP proxy cleanup", async () => {
+    await mcpProxyManager.cleanup();
+  });
+
+  // Windows：windows-mcp（uv/python）由独立 ManagedProcess 管理
+  await runCleanupStep("Windows MCP stop", async () => {
+    await stopWindowsMcp();
+  });
+
+  // 非 Windows：agent-gui-server 进程
+  if (FEATURES.ENABLE_GUI_AGENT_SERVER) {
+    await runCleanupStep("GUI Agent server stop", async () => {
+      await stopGuiAgentServer();
+    });
   }
 
+  await runCleanupStep("Engine processes stop", () => {
+    stopAllEngines();
+    log.info("[Cleanup] Engine processes stopped");
+  });
+
+  await runCleanupStep("Process registry killAll", async () => {
+    await processRegistry.killAll();
+    log.info("[Cleanup] Process registry cleared");
+  });
+
+  // Last-resort force kill for legacy managed processes.
+  // NOTE: guiServer is a legacy placeholder and typically not started directly.
   agentRunner.kill();
   lanproxy.kill();
   fileServer.kill();
-
-  try {
-    await mcpProxyManager.cleanup();
-  } catch (e) {
-    log.warn("[Cleanup] MCP proxy cleanup error:", e);
-  }
-
-  try {
-    const { stopAllEngines } = require("./services/engines/engineManager");
-    stopAllEngines();
-    log.info("[Cleanup] Engine processes stopped");
-  } catch (e) {
-    // Engine service might not be loaded
-  }
-
-  // Final safety net: kill all registered ACP processes
-  try {
-    const { processRegistry } = require("./services/system/processRegistry");
-    await processRegistry.killAll();
-    log.info("[Cleanup] Process registry cleared");
-  } catch (e) {
-    log.warn("[Cleanup] Process registry cleanup error:", e);
-  }
+  guiServer.kill();
 
   log.info("[Cleanup] All processes stopped");
 }
 
 // App lifecycle
-app.whenReady().then(async () => {
-  log.info("App ready");
+if (isPrimaryInstance) {
+  app.whenReady().then(async () => {
+    log.info("App ready");
+    logSystemInfo();
 
-  // Dev mode: fix CORS duplicate header issue
-  // Server returns both specific origin and '*', causing browser to reject.
-  // Strip duplicate Access-Control-Allow-Origin values.
-  if (isDev) {
-    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-      const headers = details.responseHeaders;
-      if (headers) {
-        const acoKey = Object.keys(headers).find(
-          (k) => k.toLowerCase() === "access-control-allow-origin",
-        );
-        if (acoKey && headers[acoKey] && headers[acoKey].length > 1) {
-          // Keep only the specific origin (not '*')
-          const specific = headers[acoKey].find((v) => v !== "*");
-          headers[acoKey] = [specific || "*"];
-        }
-      }
-      callback({ responseHeaders: headers });
-    });
-    log.info("Dev CORS fix enabled");
-  }
-
-  // Set Dock icon on macOS (development mode needs this)
-  if (process.platform === "darwin" && app.dock) {
-    const iconPath = getDockIconPath();
-    log.info("Setting Dock icon from:", iconPath);
-    try {
-      const iconImage = nativeImage.createFromPath(iconPath);
-      log.info(
-        "Icon image size:",
-        iconImage.getSize(),
-        "isEmpty:",
-        iconImage.isEmpty(),
+    // Dev mode: fix CORS duplicate header issue
+    // Server returns both specific origin and '*', causing browser to reject.
+    // Strip duplicate Access-Control-Allow-Origin values.
+    if (isDev) {
+      session.defaultSession.webRequest.onHeadersReceived(
+        (details, callback) => {
+          const headers = details.responseHeaders;
+          if (headers) {
+            const acoKey = Object.keys(headers).find(
+              (k) => k.toLowerCase() === "access-control-allow-origin",
+            );
+            if (acoKey && headers[acoKey] && headers[acoKey].length > 1) {
+              // Keep only the specific origin (not '*')
+              const specific = headers[acoKey].find((v) => v !== "*");
+              headers[acoKey] = [specific || "*"];
+              // 仅在确实修改了 ACO 时才回传 responseHeaders，
+              // 避免无条件替换导致 Set-Cookie 被 Chromium 网络服务丢弃
+              callback({ responseHeaders: headers });
+              return;
+            }
+          }
+          // 未修改任何 header → 不传 responseHeaders，Chromium 原样传递
+          callback({});
+        },
       );
-      if (!iconImage.isEmpty()) {
-        app.dock.setIcon(iconImage);
-        log.info("Dock icon set successfully");
-      } else {
-        log.warn("Icon image is empty");
-      }
-    } catch (e) {
-      log.warn("Failed to set Dock icon:", e);
+      log.info("Dev CORS fix enabled");
     }
-  }
 
-  migrateDataDir();
-  initDatabase();
-  migrateSettingsPaths();
-  getDeviceId();
+    // Set Dock icon on macOS (development mode needs this)
+    if (process.platform === "darwin" && app.dock) {
+      const iconPath = getDockIconPath();
+      log.info("Setting Dock icon from:", iconPath);
+      try {
+        const iconImage = nativeImage.createFromPath(iconPath);
+        log.info(
+          "Icon image size:",
+          iconImage.getSize(),
+          "isEmpty:",
+          iconImage.isEmpty(),
+        );
+        if (!iconImage.isEmpty()) {
+          app.dock.setIcon(iconImage);
+          log.info("Dock icon set successfully");
+        } else {
+          log.warn("Icon image is empty");
+        }
+      } catch (e) {
+        log.warn("Failed to set Dock icon:", e);
+      }
+    }
 
-  const ctx: HandlerContext = {
-    getMainWindow: () => mainWindow,
-    lanproxy,
-    fileServer,
-    agentRunner,
-    get agentRunnerPorts() {
-      return agentRunnerPorts;
-    },
-    setAgentRunnerPorts: (ports) => {
-      agentRunnerPorts = ports;
-    },
-  };
+    migrateDataDir();
+    initDatabase();
+    migrateSettingsPaths();
+    getDeviceId();
 
-  registerAllHandlers(ctx);
-  await runStartupTasks();
+    // 数据库就绪后，同步语言到主进程 i18n
+    // 优先级：本地保存 > Electron 系统语言 > 英文兜底
+    const savedLang = readSetting("i18n.active_lang") as string | undefined;
+    if (savedLang) {
+      setMainLang(savedLang);
+    } else {
+      // 无本地偏好：用 Electron 系统语言（app.ready 后可靠）
+      setMainLang(app.getLocale() || "en");
+    }
 
-  createWindow();
-  initWebviewPolicy(() => mainWindow);
+    const ctx: HandlerContext = {
+      getMainWindow: () => mainWindow,
+      lanproxy,
+      fileServer,
+      agentRunner,
+      guiServer,
+      get agentRunnerPorts() {
+        return agentRunnerPorts;
+      },
+      setAgentRunnerPorts: (ports) => {
+        agentRunnerPorts = ports;
+      },
+    };
 
-  // 非 macOS 或已打包：立即创建托盘。macOS 开发模式改为在 ready-to-show 后创建
-  if (!(process.platform === "darwin" && !app.isPackaged)) {
-    if (process.platform === "darwin" && app.dock) app.dock.show();
-    await initTrayManager();
-  }
+    registerAllHandlers(ctx);
+    await runStartupTasks();
 
-  initAutoUpdater(
-    () => mainWindow,
-    cleanupAllProcesses,
-    () => {
-      // 在 quitAndInstall 前被调用：
-      // - isQuitting=true 防止窗口 close 事件被拦截到托盘
-      // - isInstallingUpdate=true 让 before-quit 跳过 e.preventDefault()，
-      //   保留 Squirrel.Mac 的正常退出流程
-      isQuitting = true;
-      isInstallingUpdate = true;
-      log.info(
-        "[App] Update install flagged: isQuitting=true, isInstallingUpdate=true",
-      );
-    },
-  );
-});
-
-app.on("window-all-closed", () => {
-  // 窗口已隐藏到托盘，此事件不应触发
-  // 如果触发，说明窗口被意外关闭，不退出应用
-  log.info(
-    "[App] window-all-closed event fired (should not happen with tray mode)",
-  );
-});
-
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
-  }
-});
+    if (pendingSecondInstanceFocus) {
+      pendingSecondInstanceFocus = false;
+      focusExistingMainWindow(mainWindow);
+    }
+    initWebviewPolicy(() => mainWindow);
 
-let isCleaningUp = false;
+    // 非 macOS 或已打包：立即创建托盘。macOS 开发模式改为在 ready-to-show 后创建
+    if (!(process.platform === "darwin" && !app.isPackaged)) {
+      if (process.platform === "darwin" && app.dock) app.dock.show();
+      await initTrayManager();
+    }
 
-app.on("before-quit", (e) => {
-  if (isCleaningUp) return;
-  isCleaningUp = true;
-  isQuitting = true; // 通知窗口 close 事件允许关闭
-
-  if (isInstallingUpdate) {
-    // quitAndInstall 场景（macOS Squirrel.Mac / Windows NSIS / Linux AppImage 均走此路径）：
-    // - cleanup 已在 installUpdate() 中先行触发，无需重复执行
-    // - 不能调用 e.preventDefault()：各平台安装器依赖 app.quit() 的正常退出流程；
-    //   若阻止退出再 app.exit(0)，安装器可能已经失去对退出时机的感知，导致安装失败
-    // 只关闭数据库后直接 return，让 Electron 正常完成退出，安装器接管
-    log.info(
-      "[App] Before quit - update install in progress, skipping preventDefault to allow installer",
+    initAutoUpdater(
+      () => mainWindow,
+      cleanupAllProcesses,
+      () => {
+        // 在 quitAndInstall 前被调用：
+        // - isQuitting=true 防止窗口 close 事件被拦截到托盘
+        // - isInstallingUpdate=true 让 before-quit 跳过 e.preventDefault()，
+        //   保留 Squirrel.Mac 的正常退出流程
+        isQuitting = true;
+        isInstallingUpdate = true;
+        log.info(
+          "[App] Update install flagged: isQuitting=true, isInstallingUpdate=true",
+        );
+      },
     );
-    closeDb();
-    return;
-  }
-
-  // 普通退出流程：阻止立即退出，异步清理完成后再调用 app.exit(0)
-  e.preventDefault();
-
-  log.info("[App] Before quit - starting cleanup");
-
-  Promise.race([
-    cleanupAllProcesses(),
-    new Promise<void>((resolve) => setTimeout(resolve, CLEANUP_TIMEOUT)),
-  ]).finally(() => {
-    closeDb();
-    log.info("[App] Cleanup complete, exiting");
-    app.exit(0);
   });
-});
 
-app.on("will-quit", () => {
-  log.info("[App] Will quit");
-});
+  app.on("window-all-closed", () => {
+    // 窗口已隐藏到托盘，此事件不应触发
+    // 如果触发，说明窗口被意外关闭，不退出应用
+    log.info(
+      "[App] window-all-closed event fired (should not happen with tray mode)",
+    );
+  });
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+
+  let isCleaningUp = false;
+
+  app.on("before-quit", (e) => {
+    if (isCleaningUp) return;
+    isCleaningUp = true;
+    isQuitting = true; // 通知窗口 close 事件允许关闭
+
+    if (isInstallingUpdate) {
+      // quitAndInstall 场景（macOS Squirrel.Mac / Windows NSIS / Linux AppImage 均走此路径）：
+      // - cleanup 已在 installUpdate() 中先行触发，无需重复执行
+      // - 不能调用 e.preventDefault()：各平台安装器依赖 app.quit() 的正常退出流程；
+      //   若阻止退出再 app.exit(0)，安装器可能已经失去对退出时机的感知，导致安装失败
+      // 只关闭数据库后直接 return，让 Electron 正常完成退出，安装器接管
+      log.info(
+        "[App] Before quit - update install in progress, skipping preventDefault to allow installer",
+      );
+      closeDb();
+      return;
+    }
+
+    // 普通退出流程：阻止立即退出，异步清理完成后再调用 app.exit(0)
+    e.preventDefault();
+
+    log.info("[App] Before quit - starting cleanup");
+
+    void (async () => {
+      const start = Date.now();
+      try {
+        await cleanupAllProcesses();
+      } finally {
+        const elapsed = Date.now() - start;
+        if (elapsed > CLEANUP_TIMEOUT) {
+          log.warn(
+            `[App] Cleanup exceeded budget (${elapsed}ms > ${CLEANUP_TIMEOUT}ms), forcing exit`,
+          );
+        }
+        closeDb();
+        log.info("[App] Cleanup complete, exiting");
+        app.exit(0);
+      }
+    })();
+  });
+
+  app.on("will-quit", () => {
+    log.info("[App] Will quit");
+  });
+}
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {

@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type { SandboxPolicy } from "@shared/types/sandbox";
 
 // Expose protected methods to the renderer process
 contextBridge.exposeInMainWorld("electronAPI", {
@@ -36,6 +37,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
         { command: string; args: string[]; env?: Record<string, string> }
       >;
     }) => ipcRenderer.invoke("mcp:setConfig", config),
+    discoverTools: (serverId: string) =>
+      ipcRenderer.invoke("mcp:discoverTools", serverId),
+    exportConfig: () => ipcRenderer.invoke("mcp:exportConfig"),
     getPort: () => Promise.resolve(0),
     setPort: (_port: number) => Promise.resolve({ success: true }),
   },
@@ -68,6 +72,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
     }) => ipcRenderer.invoke("agentRunner:start", config),
     stop: () => ipcRenderer.invoke("agentRunner:stop"),
     status: () => ipcRenderer.invoke("agentRunner:status"),
+  },
+
+  // Sandbox policy and diagnostics
+  sandbox: {
+    status: () => ipcRenderer.invoke("sandbox:status"),
+    getPolicy: () => ipcRenderer.invoke("sandbox:policy:get"),
+    setPolicy: (patch: Partial<SandboxPolicy>) =>
+      ipcRenderer.invoke("sandbox:policy:set", patch),
+    capabilities: () => ipcRenderer.invoke("sandbox:capabilities"),
+    setup: () => ipcRenderer.invoke("sandbox:setup"),
   },
 
   // Agent - unified ACP service (claude-code/nuwaxcode)
@@ -198,6 +212,23 @@ contextBridge.exposeInMainWorld("electronAPI", {
     status: () => ipcRenderer.invoke("computerServer:status"),
   },
 
+  // GUI Agent Server lifecycle (桌面自动化视觉操作服务)
+  guiServer: {
+    start: () => ipcRenderer.invoke("guiServer:start"),
+    stop: () => ipcRenderer.invoke("guiServer:stop"),
+    status: () => ipcRenderer.invoke("guiServer:status"),
+    isEnabled: () => ipcRenderer.invoke("guiServer:isEnabled"),
+    setEnabled: (enabled: boolean) =>
+      ipcRenderer.invoke("guiServer:setEnabled", enabled),
+  },
+
+  // Admin Server lifecycle (管理接口服务)
+  adminServer: {
+    start: (port?: number) => ipcRenderer.invoke("adminServer:start", port),
+    stop: () => ipcRenderer.invoke("adminServer:stop"),
+    status: () => ipcRenderer.invoke("adminServer:status"),
+  },
+
   // Computer API (对齐 rcoder /computer/* API)
   computer: {
     chat: (request: any) => ipcRenderer.invoke("computer:chat", request),
@@ -238,6 +269,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     checkUv: () => ipcRenderer.invoke("dependencies:checkUv"),
     checkMcpProxyBundled: () =>
       ipcRenderer.invoke("dependencies:checkMcpProxyBundled"),
+    checkNuwaxcodeBundled: () =>
+      ipcRenderer.invoke("dependencies:checkNuwaxcodeBundled"),
+    checkClaudeCodeAcpBundled: () =>
+      ipcRenderer.invoke("dependencies:checkClaudeCodeAcpBundled"),
+    checkNuwaxFileServerBundled: () =>
+      ipcRenderer.invoke("dependencies:checkNuwaxFileServerBundled"),
     detectPackage: (packageName: string, binName?: string) =>
       ipcRenderer.invoke("dependencies:detectPackage", packageName, binName),
     installPackage: (
@@ -281,6 +318,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   shell: {
     openExternal: (url: string) =>
       ipcRenderer.invoke("shell:openExternal", url),
+    // 打开本地目录/文件到系统文件管理器，供设置页“打开工作空间目录”等功能复用。
+    openPath: (targetPath: string) =>
+      ipcRenderer.invoke("shell:openPath", targetPath),
   },
 
   // Session / Cookie management (for embedded webview)
@@ -289,10 +329,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
       url: string;
       name: string;
       value: string;
-      domain: string;
+      domain?: string;
       httpOnly?: boolean;
       secure?: boolean;
     }) => ipcRenderer.invoke("session:setCookie", params),
+    getCookie: (params: { url: string; name: string }) =>
+      ipcRenderer.invoke("session:getCookie", params),
+    removeCookie: (params: { url: string; name: string }) =>
+      ipcRenderer.invoke("session:removeCookie", params),
+    flushStore: () => ipcRenderer.invoke("session:flushStore"),
   },
 
   // WebView Window - 独立窗口打开会话浏览器
@@ -317,6 +362,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
     get: () => ipcRenderer.invoke("mirror:get"),
     set: (config: { npmRegistry?: string; uvIndexUrl?: string }) =>
       ipcRenderer.invoke("mirror:set", config),
+  },
+
+  // i18n - 语言同步
+  i18n: {
+    getLang: () => ipcRenderer.invoke("i18n:getLang"),
+    setLang: (lang: string) => {
+      console.debug(`[preload] i18n.setLang("${lang}")`);
+      return ipcRenderer.invoke("i18n:setLang", lang);
+    },
   },
 
   // Dialog utilities
@@ -447,6 +501,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     installUpdate: () => ipcRenderer.invoke("app:installUpdate"),
     getUpdateState: () => ipcRenderer.invoke("app:getUpdateState"),
     openReleasesPage: () => ipcRenderer.invoke("app:openReleasesPage"),
+    getUpdateDebugInfo: () => ipcRenderer.invoke("app:getUpdateDebugInfo"),
     getDeviceId: () => ipcRenderer.invoke("app:getDeviceId"),
   },
 
@@ -480,6 +535,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "memory:sync",
       "memory:consolidation",
       "memory:cleanup",
+      "admin:servicesRestarting",
+      "admin:servicesRestarted",
     ];
     if (validChannels.includes(channel)) {
       const wrapper = (_: unknown, ...args: unknown[]) => callback(...args);
@@ -491,5 +548,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   off: (channel: string, callback: (...args: unknown[]) => void) => {
     const wrapper = (callback as any).__ipcWrapper || callback;
     ipcRenderer.removeListener(channel, wrapper);
+  },
+
+  // PERF 专用日志（fire-and-forget，写入主进程 perf.YYYY-MM-DD.log）
+  perf: {
+    log: (msg: string) => ipcRenderer.send("perf:log", msg),
   },
 });

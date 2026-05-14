@@ -1,9 +1,9 @@
 /**
  * PersistentMcpBridge — thin wrapper
  *
- * The implementation lives in nuwax-mcp-stdio-proxy, installed to ~/.nuwaclaw/node_modules.
+ * The implementation lives in nuwax-mcp-stdio-proxy, installed to ~/.santiclaw/node_modules.
  * This module creates a singleton with electron-log injected as the logger.
- * Uses dynamic require from ~/.nuwaclaw so the app does not bundle the package.
+ * Uses dynamic require from ~/.santiclaw so the app does not bundle the package.
  */
 
 import * as path from "path";
@@ -53,7 +53,9 @@ function getInstance(): NonNullable<typeof instance> {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const pkg = require(bundledDir);
       if (pkg.PersistentMcpBridge) {
-        log.info(`[PersistentMcpBridge] 使用应用内集成版本: ${bundledDir}`);
+        log.info(
+          `[PersistentMcpBridge] Using bundled integration: ${bundledDir}`,
+        );
         instance = new pkg.PersistentMcpBridge(
           createQuietLogger(),
         ) as NonNullable<typeof instance>;
@@ -61,7 +63,7 @@ function getInstance(): NonNullable<typeof instance> {
       }
     } catch (err) {
       log.warn(
-        `[PersistentMcpBridge] 应用内集成版本加载失败，回退到 node_modules:`,
+        `[PersistentMcpBridge] Bundled integration load failed, falling back to node_modules:`,
         err instanceof Error ? err.message : String(err),
       );
     }
@@ -77,7 +79,7 @@ function getInstance(): NonNullable<typeof instance> {
       throw new Error(`${PKG_NAME}: PersistentMcpBridge export not found`);
     }
     log.info(
-      `[PersistentMcpBridge] 使用 ~/.nuwaxbot 路径（回退兼容）: ${pkgPath}`,
+      `[PersistentMcpBridge] Using ~/.nuwaxbot path (legacy fallback): ${pkgPath}`,
     );
     instance = new pkg.PersistentMcpBridge(createQuietLogger()) as NonNullable<
       typeof instance
@@ -85,8 +87,10 @@ function getInstance(): NonNullable<typeof instance> {
     return instance;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    log.error(`[PersistentMcpBridge] 加载 ${PKG_NAME} 失败:`, msg);
-    throw new Error(`${PKG_NAME} 未安装或加载失败。${msg ? ` (${msg})` : ""}`);
+    log.error(`[PersistentMcpBridge] Failed to load ${PKG_NAME}:`, msg);
+    throw new Error(
+      `${PKG_NAME} not installed or failed to load.${msg ? ` (${msg})` : ""}`,
+    );
   }
 }
 

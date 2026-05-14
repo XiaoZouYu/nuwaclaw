@@ -1,4 +1,4 @@
-# SantiClaw（三体大龙虾）
+# SantiClaw
 
 [English](README_EN.md) | 简体中文
 
@@ -11,7 +11,7 @@
 
 ### 多引擎支持
 
-SantiClaw（软件中文名：三体大龙虾）采用 [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) 协议与 Agent 引擎通信，支持任何实现了 ACP 协议的 Agent：
+SantiClaw 采用 [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) 协议与 Agent 引擎通信，支持任何实现了 ACP 协议的 Agent：
 
 | 引擎 | 说明 |
 |------|------|
@@ -149,7 +149,7 @@ nuwax-mcp-stdio-proxy proxy --port 18099 --config '{"mcpServers":{...}}'
 ├── logs/              # 日志文件
 │   ├── main.log      # 主进程日志
 │   └── mcp-proxy.log # MCP 代理日志
-└── santiclaw.db       # SQLite 数据库
+└── santiclaw.db        # SQLite 数据库
 ```
 
 ### IPC 通道

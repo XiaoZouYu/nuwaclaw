@@ -28,10 +28,12 @@ export interface QuickInitConfig {
  * 校验对象是否包含 Quick Init 最低必填字段（serverHost + savedKey）
  */
 export function hasRequiredQuickInitFields(obj: unknown): boolean {
-  if (!obj || typeof obj !== 'object') return false;
+  if (!obj || typeof obj !== "object") return false;
   const o = obj as Record<string, unknown>;
   return (
-    typeof o.serverHost === 'string' && o.serverHost.length > 0 &&
-    typeof o.savedKey === 'string' && o.savedKey.length > 0
+    typeof o.serverHost === "string" &&
+    o.serverHost.length > 0 &&
+    typeof o.savedKey === "string" &&
+    o.savedKey.length > 0
   );
 }

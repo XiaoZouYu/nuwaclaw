@@ -11,7 +11,7 @@ Multi-engine AI assistant desktop client based on ACP (Agent Client Protocol), s
 
 ### Multi-Engine Support
 
-SantiClaw, branded in Chinese as "三体大龙虾", uses [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) to communicate with Agent engines, supporting any ACP-compatible Agent:
+SantiClaw uses [ACP (Agent Client Protocol)](https://agentclientprotocol.com/) to communicate with Agent engines, supporting any ACP-compatible Agent:
 
 | Engine | Description |
 |--------|-------------|
@@ -149,7 +149,7 @@ nuwax-mcp-stdio-proxy proxy --port 18099 --config '{"mcpServers":{...}}'
 ├── logs/              # Log files
 │   ├── main.log      # Main process log
 │   └── mcp-proxy.log # MCP proxy log
-└── santiclaw.db       # SQLite database
+└── santiclaw.db        # SQLite database
 ```
 
 ### IPC Channels
